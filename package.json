@@ -1,0 +1,31 @@
+{
+  "name": "imagediff-flow",
+  "version": "1.0.0",
+  "description": "Image diff workflow visual tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anton-gorbikov/imagediff-flow.git"
+  },
+  "keywords": [
+    "imagediff"
+  ],
+  "author": "Anton Gorbikov",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/anton-gorbikov/imagediff-flow/issues"
+  },
+  "homepage": "https://github.com/anton-gorbikov/imagediff-flow#readme",
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "browserify": "^14.4.0",
+    "chosen-js": "^1.8.0",
+    "d3": "3.4.13",
+    "jasny-bootstrap": "^3.1.3",
+    "jquery": "^3.2.1",
+    "lodash": "^4.17.4"
+  }
+}
