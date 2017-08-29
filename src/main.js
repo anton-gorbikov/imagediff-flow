@@ -9,26 +9,13 @@ require('./clusterDendrogram');
 
 (function() {
 	getDataAndAppendDropdown();
+	initialiseSideBar();
 
-	$.get('rebase')
-		.done(function() {
-			initialiseSideBar(true);
-		})
-		.fail(function() {
-			initialiseSideBar(false);
-		});
-
-	function initialiseSideBar(canRebase) {
-
+	function initialiseSideBar() {
 		var rebaseBtn = $('#rebase');
 		var rebaseSuccessBtn = $('#rebase-success');
 		var imageToRebase;
 		var svgElement;
-		var canRebase;
-
-		if (!canRebase) {
-			rebaseBtn.remove();
-		}
 
 		$('.navmenu').offcanvas({
 			autohide: false
@@ -83,8 +70,8 @@ require('./clusterDendrogram');
 
 		if (e[prop]) {
 			a.show();
-			a.attr('href', e[prop]);
-			img.attr('src', e[prop]);
+			a.attr('href', `/image?fileName=${e[prop]}`);
+			img.attr('src', `/image?fileName=${e[prop]}`);
 		} else {
 			a.hide();
 			a.attr('href', '');
@@ -93,7 +80,7 @@ require('./clusterDendrogram');
 	}
 
 	function getDataAndAppendDropdown() {
-		$.getJSON('data.js', function(json) {
+		$.getJSON('data', function(json) {
 
 			var dropdown = $('<select id="dropdown">');
 

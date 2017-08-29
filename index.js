@@ -32,10 +32,12 @@ module.exports.init = (options) => {
 				let child = result[moduleName] = {};
 				let testSuite = data[moduleName];
 
-				testSuite.forEach((testName) => {
+				testSuite.forEach((testName, index, tests) => {
+					let isLast = index !== tests.length - 1;
+
 					_.extend(child, {
 						name: testName,
-						isBranchRoot: true,
+						isBranchRoot: !isLast,
 						isDecisionRoot: false,
 						isChanceRoot: false,
 						isActive: true,
@@ -44,10 +46,9 @@ module.exports.init = (options) => {
 							failure: `${options.diffsPath}/${moduleName}/${testName}.png`,
 							latest: `${options.resultsPath}/${moduleName}/${testName}.png`
 						},
-						children: []
+						children: !isLast ? [{}] : null
 					});
-					child.children.push({});
-					child = child.children[0];
+					child = child.children && child.children[0];
 				});
 			})
 		});
