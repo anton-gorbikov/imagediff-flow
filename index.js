@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const _ = require('lodash');
 
 module.exports = {};
 
@@ -13,14 +14,42 @@ module.exports.init = (options) => {
 	}
 
 	function getImage(request, response) {
-
+		fs.readFile(getPath(request.query.fileName), (error, image) => {
+			response.writeHead(200, {
+				'Content-Type': 'image/png'
+			});
+			response.end(image, 'binary');
+		});
 	}
 
 	function getData(request, response) {
 		let result = {};
 
-		options.testLists.map(getPath).forEach(function(testList) {
+		options.testLists.map(getPath).forEach((testList) => {
 			let data = JSON.parse(fs.readFileSync(testList));
+
+			Object.keys(data).forEach((moduleName) => {
+				let child = result[moduleName] = {};
+				let testSuite = data[moduleName];
+
+				testSuite.forEach((testName) => {
+					_.extend(child, {
+						name: testName,
+						isBranchRoot: true,
+						isDecisionRoot: false,
+						isChanceRoot: false,
+						isActive: true,
+						screenshot: {
+							original: `${options.originalsPath}/${moduleName}/${testName}.png`,
+							failure: `${options.diffsPath}/${moduleName}/${testName}.png`,
+							latest: `${options.resultsPath}/${moduleName}/${testName}.png`
+						},
+						children: []
+					});
+					child.children.push({});
+					child = child.children[0];
+				});
+			})
 		});
 
 		response.send(result);
