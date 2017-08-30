@@ -13,10 +13,8 @@ getDataAndAppendDropdown();
 initialiseSideBar();
 
 function initialiseSideBar() {
-	var rebaseBtn = $('#rebase');
-	var rebaseSuccessBtn = $('#rebase-success');
-	var imageToRebase;
-	var svgElement;
+	let rebaseBtn = $('#rebase');
+	let rebaseSuccessBtn = $('#rebase-success');
 
 	$('.navmenu').offcanvas({
 		autohide: false
@@ -26,9 +24,12 @@ function initialiseSideBar() {
 		updateSideBar(e);
 
 		if (e.latest) {
-			imageToRebase = e.src;
-			svgElement = e.element;
-			if (svgElement.className.baseVal.indexOf('screenshotFail') !== -1) {
+			rebaseBtn.data({
+				latest: e.latest,
+				original: e.original,
+				svgElement: e.element
+			});
+			if (e.element.className.baseVal.indexOf('screenshotFail') !== -1) {
 				rebaseSuccessBtn.hide();
 				rebaseBtn.show();
 			} else {
@@ -45,9 +46,9 @@ function initialiseSideBar() {
 	});
 
 	rebaseBtn.click(function() {
-		$.post('rebase', {
-			img: imageToRebase
-		}, function() {
+		let { original, latest, svgElement } = rebaseBtn.data();
+
+		$.get('rebase', { original, latest }, function() {
 			rebaseBtn.hide();
 			rebaseSuccessBtn.show();
 			svgElement.className.baseVal = svgElement.className.baseVal.replace('screenshotFail', '');

@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const _ = require('lodash');
 
-const Ok = 200;
+const StatusOk = 200;
 const DefaultPort = 9001;
 
 module.exports = {};
@@ -20,7 +20,7 @@ module.exports.init = (options) => {
 
 	function getImage(request, response) {
 		fs.readFile(getPath(request.query.fileName), (error, image) => {
-			response.writeHead(Ok, {
+			response.writeHead(StatusOk, {
 				'Content-Type': 'image/png'
 			});
 			response.end(image, 'binary');
@@ -78,6 +78,15 @@ module.exports.init = (options) => {
 		}
 	}
 
+	function rebaseImage(request, response) {
+		let { original, latest } = request.query;
+
+		fs.createReadStream(getPath(latest))
+			.pipe(fs.createWriteStream(getPath(original)));
+
+		response.send('');
+	}
+
 	return {
 		report: () => {
 			const app = express();
@@ -85,6 +94,7 @@ module.exports.init = (options) => {
 			app.use(express.static(path.join(__dirname, options.root)));
 			app.get('/image', getImage);
 			app.get('/data', getData);
+			app.get('/rebase', rebaseImage);
 
 			app.listen(DefaultPort, () => {
 				console.log('http://localhost:9001');

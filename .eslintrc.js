@@ -14,6 +14,9 @@ module.exports = {
 		_: true
 	},
 	rules: {
+		// Recommended override
+		'no-console': 'off',
+
 		// Possible Errors section.
 		'no-extra-parens': ['error', 'all'],
 		'no-unsafe-negation': 'error',
@@ -50,7 +53,7 @@ module.exports = {
 		'no-labels': 'error',
 		'no-lone-blocks': 'error',
 		'no-loop-func': 'error',
-		'no-magic-numbers': ['error', { 'ignore': [-1, 1] }],
+		'no-magic-numbers': ['error', { 'ignore': [-1, 0, 1] }],
 		'no-multi-spaces': 'error',
 		'no-multi-str': 'error',
 		'no-new-func': 'error',
