@@ -1,3 +1,5 @@
+'use strict';
+
 function createD3ClusterDendrogram(root, config) {
 
 	config = config || {};

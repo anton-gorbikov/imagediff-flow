@@ -1,5 +1,5 @@
 {
-	"eslint.enable": false,
+	"eslint.enable": true,
 	"editor.formatOnSave": false,
 	"editor.insertSpaces": false,
 	"files.insertFinalNewline": true

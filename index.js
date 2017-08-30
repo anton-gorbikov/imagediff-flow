@@ -1,7 +1,12 @@
+'use strict';
+
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const _ = require('lodash');
+
+const Ok = 200;
+const DefaultPort = 9001;
 
 module.exports = {};
 
@@ -15,7 +20,7 @@ module.exports.init = (options) => {
 
 	function getImage(request, response) {
 		fs.readFile(getPath(request.query.fileName), (error, image) => {
-			response.writeHead(200, {
+			response.writeHead(Ok, {
 				'Content-Type': 'image/png'
 			});
 			response.end(image, 'binary');
@@ -33,7 +38,7 @@ module.exports.init = (options) => {
 				let testSuite = data[moduleName];
 
 				testSuite.forEach((testName, index, tests) => {
-					let isLast = index !== tests.length - 1;
+					let isLast = index === tests.length - 1;
 
 					_.extend(child, {
 						name: testName,
@@ -42,7 +47,7 @@ module.exports.init = (options) => {
 						isChanceRoot: false,
 						isActive: true,
 						screenshot: {
-							original: `${options.originalsPath}/${moduleName}/${testName}.png`,
+							// original: `${options.originalsPath}/${moduleName}/${testName}.png`,
 							failure: `${options.diffsPath}/${moduleName}/${testName}.png`,
 							latest: `${options.resultsPath}/${moduleName}/${testName}.png`
 						},
@@ -56,6 +61,12 @@ module.exports.init = (options) => {
 		response.send(result);
 	}
 
+	function getScreenshotData() {
+		let result = {};
+
+		return result;
+	}
+
 	return {
 		report: () => {
 			const app = express();
@@ -64,7 +75,7 @@ module.exports.init = (options) => {
 			app.get('/image', getImage);
 			app.get('/data', getData);
 
-			app.listen(9001, () => {
+			app.listen(DefaultPort, () => {
 				console.log('http://localhost:9001');
 			});
 		}
