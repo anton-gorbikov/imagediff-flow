@@ -1,7 +1,7 @@
 'use strict';
 
 const express = require('express');
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 const _ = require('lodash');
 
@@ -11,11 +11,10 @@ const DefaultPort = 9001;
 module.exports = {};
 
 module.exports.init = (options) => {
-	// TODO: Copy required files to the host project.
+	fs.copySync(path.join(__dirname, 'dist'), options.root);
 
-	// TODO: Validate that __dirname works for NPM package.
 	function getPath(resourcePath) {
-		return path.join(__dirname, options.root, resourcePath);
+		return path.resolve(options.root, resourcePath);
 	}
 
 	function getImage(request, response) {
@@ -91,7 +90,7 @@ module.exports.init = (options) => {
 		report: () => {
 			const app = express();
 
-			app.use(express.static(path.join(__dirname, options.root)));
+			app.use(express.static(options.root));
 			app.get('/image', getImage);
 			app.get('/data', getData);
 			app.get('/rebase', rebaseImage);

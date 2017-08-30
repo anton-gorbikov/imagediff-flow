@@ -20,7 +20,8 @@
   },
   "homepage": "https://github.com/anton-gorbikov/imagediff-flow#readme",
   "dependencies": {
-    "express": "^4.15.4"
+    "express": "^4.15.4",
+    "fs-extra": "^4.0.1"
   },
   "devDependencies": {
     "bootstrap": "^3.3.7",
