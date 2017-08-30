@@ -1,5 +1,35 @@
 'use strict';
 
+function updateClassNames(svg) {
+	svg.selectAll('.step')
+		.filter((d) => !d.isDecision && !d.isChance && !d.name)
+		.remove();
+
+	svg.selectAll('.step')
+		.filter((d) => d.isDecision)
+		.attr('class', 'decision');
+
+	svg.selectAll('.step')
+		.filter((d) => d.isChanceRoot)
+		.attr('class', 'chanceRoot');
+
+	svg.selectAll('.step')
+		.filter((d) => d.isDecisionRoot)
+		.attr('class', 'decisionRoot');
+
+	svg.selectAll('.step')
+		.filter((d) => d.isChance)
+		.attr('class', 'chance');
+
+	svg.selectAll('.step')
+		.filter((d) => d.isActive)
+		.classed('active', true);
+
+	svg.selectAll('.active')
+		.filter((d) => d.isFailed)
+		.classed('fail', true);
+}
+
 function createD3Tree(root, config) {
 	config = config || {};
 
@@ -49,35 +79,7 @@ function createD3Tree(root, config) {
 		.attr("class", "step")
 		.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
 
-	svg.selectAll(".step").filter(function(d, i) {
-		return !d.isDecision && !d.isChance && !d.name;
-	}).remove();
-
-	svg.selectAll(".step").filter(function(d, i) {
-		return d.isDecision;
-	}).attr("class", "decision");
-
-	svg.selectAll(".step").filter(function(d, i) {
-		return d.isChanceRoot;
-	}).attr("class", "chanceRoot");
-
-	svg.selectAll(".step").filter(function(d, i) {
-		return d.isDecisionRoot;
-	}).attr("class", "decisionRoot");
-
-	svg.selectAll(".step").filter(function(d, i) {
-		return d.isChance;
-	}).attr("class", "chance");
-
-	svg.selectAll(".step").filter(function(d, i) {
-		return d.isActive;
-	}).classed('active', true);
-
-	svg.selectAll(".active")
-		.filter(function(d, i) {
-			return d.isFailed;
-		})
-		.classed('fail', true);
+	updateClassNames(svg);
 
 	var tooltip = d3.select("#canvas")
 		.append("div")
@@ -112,7 +114,6 @@ function createD3Tree(root, config) {
 			$("body").trigger({
 				type: "screenshot",
 				name: e.name,
-				src: e.screenshot.src,
 				diff: e.failedScreenshot,
 				latest: e.latestScreenshot,
 				original: e.originalScreenshot,

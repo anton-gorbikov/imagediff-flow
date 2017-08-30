@@ -96,7 +96,6 @@ function createD3ClusterDendrogram(root, config) {
 			$("body").trigger({
 				type: "screenshot",
 				name: e.name,
-				src: e.screenshot.src,
 				diff: e.failedScreenshot,
 				latest: e.latestScreenshot,
 				original: e.originalScreenshot,

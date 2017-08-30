@@ -25,7 +25,7 @@ function initialiseSideBar() {
 	$('body').on('screenshot', function(e) {
 		updateSideBar(e);
 
-		if (e.src) {
+		if (e.latest) {
 			imageToRebase = e.src;
 			svgElement = e.element;
 			if (svgElement.className.baseVal.indexOf('screenshotFail') !== -1) {
@@ -63,8 +63,8 @@ function updateSideBar(e) {
 }
 
 function toggleSideBarImages(e, prop) {
-	var a = $('#' + prop);
-	var img = $('#' + prop + ' img');
+	var a = $(`#${prop}`);
+	var img = $(`#${prop} img`);
 
 	if (e[prop]) {
 		a.show();

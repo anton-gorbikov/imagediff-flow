@@ -37,34 +37,45 @@ module.exports.init = (options) => {
 				let child = result[moduleName] = {};
 				let testSuite = data[moduleName];
 
-				testSuite.forEach((testName, index, tests) => {
+				testSuite.forEach((test, index, tests) => {
 					let isLast = index === tests.length - 1;
 
 					_.extend(child, {
-						name: testName,
+						name: test.name,
 						isBranchRoot: !isLast,
 						isDecisionRoot: false,
 						isChanceRoot: false,
 						isActive: true,
-						screenshot: {
-							// original: `${options.originalsPath}/${moduleName}/${testName}.png`,
-							failure: `${options.diffsPath}/${moduleName}/${testName}.png`,
-							latest: `${options.resultsPath}/${moduleName}/${testName}.png`
-						},
+						screenshot: getScreenshotData(moduleName, test),
 						children: !isLast ? [{}] : null
 					});
 					child = child.children && child.children[0];
 				});
-			})
+			});
 		});
 
 		response.send(result);
 	}
 
-	function getScreenshotData() {
+	function getScreenshotData(moduleName, test) {
 		let result = {};
 
+		addFilePath(result, 'original', `${options.originalsPath}/${moduleName}/${test.name}.png`);
+		if (test.failed) {
+			addFilePath(result, 'failure', `${options.diffsPath}/${moduleName}/${test.name}.png`);
+		}
+		addFilePath(result, 'latest', `${options.resultsPath}/${moduleName}/${test.name}.png`);
+
 		return result;
+	}
+
+	function addFilePath(object, type, path) {
+		try {
+			fs.accessSync(getPath(path));
+			object[type] = path;
+		} catch (e) {
+			// Do nothing.
+		}
 	}
 
 	return {
