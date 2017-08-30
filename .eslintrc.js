@@ -50,7 +50,7 @@ module.exports = {
 		'no-labels': 'error',
 		'no-lone-blocks': 'error',
 		'no-loop-func': 'error',
-		'no-magic-numbers': 'error',
+		'no-magic-numbers': ['error', { 'ignore': [-1, 1] }],
 		'no-multi-spaces': 'error',
 		'no-multi-str': 'error',
 		'no-new-func': 'error',

@@ -1,7 +1,6 @@
 'use strict';
 
 function createD3Tree(root, config) {
-
 	config = config || {};
 
 	var fileRoot = config.root || '';

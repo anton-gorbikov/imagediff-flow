@@ -1,7 +1,6 @@
 'use strict';
 
 function createD3ClusterDendrogram(root, config) {
-
 	config = config || {};
 
 	var familyNames = {};
@@ -254,13 +253,9 @@ function getLeafInfo(obj) {
 
 	function recurse(obj, root, isRoot) {
 		var newRootRef;
-		var i;
-		var len;
 
 		if (obj.children) {
-			i = 0;
-			len = obj.children.length;
-			for (; i < len; i++) {
+			for (let i = 0; i < obj.children.length; i++) {
 				if (isRoot) {
 					newRootRef = {
 						name: obj.children[i].name,
@@ -282,7 +277,7 @@ function getLeafInfo(obj) {
 }
 
 function applyClass(steps, prop, className) {
-	steps.filter(function(d, i) {
+	steps.filter(function(d) {
 		return d[prop];
 	}).classed(className, true);
 }
