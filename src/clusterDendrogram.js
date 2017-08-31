@@ -281,4 +281,4 @@ function applyClass(steps, prop, className) {
 	}).classed(className, true);
 }
 
-global.createD3ClusterDendrogram = createD3ClusterDendrogram;
+module.exports = createD3ClusterDendrogram;

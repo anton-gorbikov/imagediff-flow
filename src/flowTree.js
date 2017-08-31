@@ -135,4 +135,4 @@ function createD3Tree(root, config) {
 	zoom.event(svg);
 }
 
-global.createD3Tree = createD3Tree;
+module.exports = createD3Tree;

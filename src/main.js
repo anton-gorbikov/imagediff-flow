@@ -6,8 +6,9 @@ window.d3 = require('d3');
 require('chosen-js');
 require('bootstrap');
 require('../node_modules/jasny-bootstrap/dist/js/jasny-bootstrap.min');
-require('./flowTree');
-require('./clusterDendrogram');
+
+let createD3Tree = require('./flowTree');
+let createD3ClusterDendrogram = require('./clusterDendrogram');
 
 getDataAndAppendDropdown();
 initialiseSideBar();
