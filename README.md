@@ -1,3 +1,5 @@
+[![npm version](https://badge.fury.io/js/imagediff-flow.svg)](https://badge.fury.io/js/imagediff-flow)
+
 # imagediff-flow
 UI for image diff test automation. This project is based on the [Huddle/PhantomFlow](https://github.com/Huddle/PhantomFlow) project. The intend of this fork is to remove all dependencies like [PhantomJS](http://github.com/ariya/phantomjs/), [CasperJS](http://github.com/n1k0/casperjs) and [PhantomCSS](http://github.com/Huddle/PhantomCSS) and be able to use UI with any technology stack.
 
