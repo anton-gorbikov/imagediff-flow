@@ -81,18 +81,17 @@ function toggleSideBarImages(e, prop) {
 
 function getDataAndAppendDropdown() {
 	$.getJSON('data', function(json) {
-
 		var dropdown = $('<select id="dropdown">');
 
 		dropdown.append('<option value="default" selected>View all</option>');
 
-		_.forEach(json, function(value, key) {
-			key = key.replace(/"/g, '');
-			dropdown.append('<option value="' + key + '">' + key.replace('.json', '') + '</option>');
-		});
+		Object.keys(json)
+			.map((key) => key.replace(/"/g, ''))
+			.forEach((key) => dropdown.append(`<option value="${key}">${key}</option>`));
 
-		dropdown.on('change', function(a, v) {
-			var val = dropdown.val();
+		dropdown.on('change', () => {
+			let val = dropdown.val();
+
 			if (val !== 'default') {
 				window.location.hash = val;
 			} else {
@@ -113,27 +112,18 @@ function getDataAndAppendDropdown() {
 }
 
 function processHash(data) {
-	var hash = window.location.hash.slice(1);
-	var searchTerm;
-	var found;
-	var combined;
-	var promises = [];
+	let hash = window.location.hash.slice(1);
+	let dropdown = $('#dropdown');
 
 	$('svg,.tooltip,.tooltip-label').remove();
 
-	$(dropdown).val(hash || 'default');
-	$(dropdown).trigger("chosen:updated");
+	dropdown.val(hash || 'default');
+	dropdown.trigger('chosen:updated');
 
-	if (hash && hash.indexOf('?') !== -1) {
-
-		searchTerm = hash.split('?')[1];
-
-	} else if (hash) {
-
+	if (hash) {
 		createD3Tree($.extend(true, {}, data[hash]), {
 			root: '/'
 		});
-
 	} else {
 		doDefault(data);
 	}

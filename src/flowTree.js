@@ -30,9 +30,7 @@ function updateClassNames(svg) {
 		.classed('fail', true);
 }
 
-function createD3Tree(root, config) {
-	config = config || {};
-
+function createD3Tree(root, config = {}) {
 	var fileRoot = config.root || '';
 
 	var width = $(window).width();
@@ -48,53 +46,53 @@ function createD3Tree(root, config) {
 
 	var zoom = d3.behavior.zoom().x(x).y(y)
 		.scaleExtent([0.1, 2.5])
-		.on("zoom", function(a, b, c) {
+		.on('zoom', function(a, b, c) {
 			var t = zoom.translate();
-			svg.attr("transform", "translate(" + (t[0]) + "," + (t[1]) + ") scale( " + zoom.scale() + ")");
+			svg.attr('transform', 'translate(' + (t[0]) + ',' + (t[1]) + ') scale( ' + zoom.scale() + ')');
 		});
 
 	var svg = d3
-		.select("#canvas")
-		.append("svg")
+		.select('#canvas')
+		.append('svg')
 		.call(zoom)
-		.attr("width", width)
-		.attr("height", height)
-		.append("g");
+		.attr('width', width)
+		.attr('height', height)
+		.append('g');
 
-	d3.select(self.frameElement).style("height", height + "px");
+	d3.select(self.frameElement).style('height', height + 'px');
 
-	var link = svg.selectAll(".link")
+	var link = svg.selectAll('.link')
 		.data(links)
-		.enter().append("path")
-		.attr("class", "link")
-		.attr("d", diagonal);
+		.enter().append('path')
+		.attr('class', 'link')
+		.attr('d', diagonal);
 
-	svg.selectAll(".link").filter(function(d, i) {
+	svg.selectAll('.link').filter(function(d, i) {
 		return !d.target.isDecision && !d.target.isChance && !d.target.name;
 	}).remove();
 
-	var node = svg.selectAll(".node")
+	var node = svg.selectAll('.node')
 		.data(nodes)
-		.enter().append("g")
-		.attr("class", "step")
-		.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+		.enter().append('g')
+		.attr('class', 'step')
+		.attr('transform', function(d) { return 'translate(' + d.y + ',' + d.x + ')'; });
 
 	updateClassNames(svg);
 
-	var tooltip = d3.select("#canvas")
-		.append("div")
-		.attr("class", "tooltip")
-		.style("position", "absolute")
-		.style("z-index", "10")
-		.style("visibility", "hidden")
-		.text("");
+	var tooltip = d3.select('#canvas')
+		.append('div')
+		.attr('class', 'tooltip')
+		.style('position', 'absolute')
+		.style('z-index', '10')
+		.style('visibility', 'hidden')
+		.text('');
 
-	var tooltipText = tooltip.append("div");
-	var tooltipImg = tooltip.append("img");
+	var tooltipText = tooltip.append('div');
+	var tooltipImg = tooltip.append('img');
 
-	node.append("circle").attr("r", 8);
+	node.append('circle').attr('r', 8);
 
-	svg.selectAll(".step")
+	svg.selectAll('.step')
 		.filter(function(d, i) {
 			var _this = this;
 			var failedScreenshot;
@@ -104,15 +102,15 @@ function createD3Tree(root, config) {
 				if (d.screenshot.failure) {
 					d.failedScreenshot = d.screenshot.failure;
 					d.latestScreenshot = d.screenshot.latest;
-					_this.setAttribute("class", _this.className.baseVal + ' screenshotFail');
+					_this.setAttribute('class', _this.className.baseVal + ' screenshotFail');
 				}
 			}
 			return !!d.screenshot;
 		})
 		.classed('screenshot', true)
-		.on("mouseover", function(e) {
-			$("body").trigger({
-				type: "screenshot",
+		.on('mouseover', function(e) {
+			$('body').trigger({
+				type: 'screenshot',
 				name: e.name,
 				diff: e.failedScreenshot,
 				latest: e.latestScreenshot,
@@ -123,11 +121,11 @@ function createD3Tree(root, config) {
 
 	var dy = !!window.chrome ? 6 : 22;
 
-	node.append("text")
-		.attr("dx", function(d, e, f) { return d.isBranchRoot ? 8 : d.children ? -15 : 15; })
-		.attr("dy", function(d) { return d.isBranchRoot ? 22 : d.children ? dy : dy; })
-		.attr("class", function(d) { return d.isDecisionRoot ? 'text decisiontext' : d.isChanceRoot ? 'text chancetext' : d.children ? 'text steptext' : 'text endtext'; })
-		.attr("transform", function(d) { return (d.children && !d.isBranchRoot) ? "rotate(330)" : "rotate(0)"; })
+	node.append('text')
+		.attr('dx', function(d, e, f) { return d.isBranchRoot ? 8 : d.children ? -15 : 15; })
+		.attr('dy', function(d) { return d.isBranchRoot ? 22 : d.children ? dy : dy; })
+		.attr('class', function(d) { return d.isDecisionRoot ? 'text decisiontext' : d.isChanceRoot ? 'text chancetext' : d.children ? 'text steptext' : 'text endtext'; })
+		.attr('transform', function(d) { return (d.children && !d.isBranchRoot) ? 'rotate(330)' : 'rotate(0)'; })
 		.text(function(d) { return d.name.replace('.json', ''); });
 
 	zoom.scale(1);

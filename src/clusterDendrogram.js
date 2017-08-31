@@ -1,8 +1,6 @@
 'use strict';
 
-function createD3ClusterDendrogram(root, config) {
-	config = config || {};
-
+function createD3ClusterDendrogram(root, config = {}) {
 	var familyNames = {};
 
 	var fileRoot = config.root || '';
@@ -22,35 +20,35 @@ function createD3ClusterDendrogram(root, config) {
 
 	var zoom = d3.behavior.zoom().x(x).y(y)
 		.scaleExtent([0.1, 2.5])
-		.on("zoom", function(a, b, c) {
+		.on('zoom', function(a, b, c) {
 			var t = zoom.translate();
-			svg.attr("transform", "translate(" + (t[0]) + "," + (t[1]) + ") scale( " + zoom.scale() + ")");
+			svg.attr('transform', 'translate(' + (t[0]) + ',' + (t[1]) + ') scale( ' + zoom.scale() + ')');
 		});
 
 	var svg = d3
-		.select("#canvas")
-		.append("svg")
+		.select('#canvas')
+		.append('svg')
 		.call(zoom)
-		.attr("width", width)
-		.attr("height", height)
-		.append("g");
+		.attr('width', width)
+		.attr('height', height)
+		.append('g');
 
 	var nodes = cluster.nodes(root);
 
-	var link = svg.selectAll("path.link")
+	var link = svg.selectAll('path.link')
 		.data(cluster.links(nodes))
 		.enter()
-		.append("path")
-		.attr("class", "link-subtle")
-		.attr("d", diagonal);
+		.append('path')
+		.attr('class', 'link-subtle')
+		.attr('d', diagonal);
 
-	var node = svg.selectAll("g.node")
+	var node = svg.selectAll('g.node')
 		.data(nodes)
-		.enter().append("g")
-		.attr("class", "step")
-		.attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
+		.enter().append('g')
+		.attr('class', 'step')
+		.attr('transform', function(d) { return 'rotate(' + (d.x - 90) + ')translate(' + d.y + ')'; })
 
-	var steps = svg.selectAll(".step");
+	var steps = svg.selectAll('.step');
 
 	applyClass(steps, 'isDecision', 'decision');
 	applyClass(steps, 'isChanceRoot', 'chanceRoot');
@@ -58,21 +56,21 @@ function createD3ClusterDendrogram(root, config) {
 	applyClass(steps, 'isChance', 'chance');
 	applyClass(steps, 'isActive', 'active');
 
-	applyClass(svg.selectAll(".active"), 'isFailed', 'fail');
+	applyClass(svg.selectAll('.active'), 'isFailed', 'fail');
 
-	node.append("circle")
-		.attr("r", 4);
+	node.append('circle')
+		.attr('r', 4);
 
-	var tooltip = d3.select("#canvas")
-		.append("div")
-		.attr("class", "tooltip")
-		.style("position", "absolute")
-		.style("z-index", "10")
-		.style("visibility", "hidden")
-		.text("");
+	var tooltip = d3.select('#canvas')
+		.append('div')
+		.attr('class', 'tooltip')
+		.style('position', 'absolute')
+		.style('z-index', '10')
+		.style('visibility', 'hidden')
+		.text('');
 
-	var tooltipText = tooltip.append("div");
-	var tooltipImg = tooltip.append("img");
+	var tooltipText = tooltip.append('div');
+	var tooltipImg = tooltip.append('img');
 
 	steps
 		.filter(function(d, i) {
@@ -86,15 +84,15 @@ function createD3ClusterDendrogram(root, config) {
 				if (d.screenshot.failure) {
 					d.failedScreenshot = d.screenshot.failure;
 					d.latestScreenshot = d.screenshot.latest;
-					_this.setAttribute("class", _this.className.baseVal + ' screenshotFail');
+					_this.setAttribute('class', _this.className.baseVal + ' screenshotFail');
 				}
 			}
 			return !!d.screenshot;
 		})
 		.classed('screenshot', true)
-		.on("mouseover", function(e) {
-			$("body").trigger({
-				type: "screenshot",
+		.on('mouseover', function(e) {
+			$('body').trigger({
+				type: 'screenshot',
 				name: e.name,
 				diff: e.failedScreenshot,
 				latest: e.latestScreenshot,
@@ -144,16 +142,16 @@ function get_random_color() {
 	function c() {
 		return Math.floor((Math.random() * 128) + 128).toString(16);
 	}
-	return "#" + c() + c() + c();
+	return '#' + c() + c() + c();
 }
 
 function groupPie(radius, svg, data) {
 	var color = d3.scale.ordinal()
-		.range(["#DEDDDA",
-			"#D6D6D2",
-			"#BFBFBB",
-			"#CCCBC8",
-			"#C2C1BE"]);
+		.range(['#DEDDDA',
+			'#D6D6D2',
+			'#BFBFBB',
+			'#CCCBC8',
+			'#C2C1BE']);
 
 	var g = pie('group-pie', radius, 46, color, svg, data);
 
@@ -163,17 +161,17 @@ function groupPie(radius, svg, data) {
 function rootPie(radius, svg, data) {
 
 	var color = d3.scale.ordinal()
-		.range(["#CCD2E3",
-			"#D5E1ED",
-			"#CBD4D6",
-			"#D5EDEC",
-			"#CCE3DB"]);
+		.range(['#CCD2E3',
+			'#D5E1ED',
+			'#CBD4D6',
+			'#D5EDEC',
+			'#CCE3DB']);
 
 	var g = pie('root-pie', radius, 8, color, svg, data);
 
 	pieTooltip(g);
 
-	g.on("click", function(e) {
+	g.on('click', function(e) {
 		window.location.hash = e.data.name;
 	});
 }
@@ -187,15 +185,15 @@ function pie(name, radius, offset, color, svg, data) {
 		.sort(null)
 		.value(function(d) { return d.value; });
 
-	var g = svg.selectAll(".arc" + name)
+	var g = svg.selectAll('.arc' + name)
 		.data(pie(data))
 		.enter()
-		.append("g")
-		.attr("class", "arc");
+		.append('g')
+		.attr('class', 'arc');
 
-	g.append("path")
-		.attr("d", arc)
-		.style("fill", function(d) { return color(d.data.name); });
+	g.append('path')
+		.attr('d', arc)
+		.style('fill', function(d) { return color(d.data.name); });
 
 	g.classed(name, true);
 
@@ -203,33 +201,33 @@ function pie(name, radius, offset, color, svg, data) {
 }
 
 function pieTooltip(g) {
-	var tooltip = d3.select("#canvas")
-		.append("div")
-		.attr("class", "tooltip-label")
-		.style("position", "absolute")
-		.style("z-index", "10")
-		.style("visibility", "hidden")
-		.text("");
+	var tooltip = d3.select('#canvas')
+		.append('div')
+		.attr('class', 'tooltip-label')
+		.style('position', 'absolute')
+		.style('z-index', '10')
+		.style('visibility', 'hidden')
+		.text('');
 
-	var tooltipText = tooltip.append("div");
+	var tooltipText = tooltip.append('div');
 
-	g.on("mouseover", function(e) {
-		if (tooltip.style("visibility") === "hidden") {
+	g.on('mouseover', function(e) {
+		if (tooltip.style('visibility') === 'hidden') {
 			tooltipText.text(e.data.name.replace('.json', ''));
 		}
-		return tooltip.style("visibility", "visible");
+		return tooltip.style('visibility', 'visible');
 	})
-		.on("mousemove", function() {
+		.on('mousemove', function() {
 			return mousemove(tooltip);
 		})
-		.on("mouseout", function() {
-			return tooltip.style("visibility", "hidden");
+		.on('mouseout', function() {
+			return tooltip.style('visibility', 'hidden');
 		});
 }
 
 function mousemove(tooltip) {
-	var width = Number(tooltip.style("width").replace('px', ''));
-	var height = Number(tooltip.style("height").replace('px', ''));
+	var width = Number(tooltip.style('width').replace('px', ''));
+	var height = Number(tooltip.style('height').replace('px', ''));
 	var right = d3.event.pageX + 10 + width;
 	var top = d3.event.pageY - 10 + height;
 
@@ -244,17 +242,17 @@ function mousemove(tooltip) {
 	} else {
 		top = d3.event.pageY - 10;
 	}
-	return tooltip.style("top", top + "px").style("left", right + "px");
+	return tooltip.style('top', top + 'px').style('left', right + 'px');
 }
 
 function getLeafInfo(obj) {
 	var roots = [];
 
 	function recurse(obj, root, isRoot) {
-		var newRootRef;
-
 		if (obj.children) {
 			for (let i = 0; i < obj.children.length; i++) {
+				let newRootRef = null;
+
 				if (isRoot) {
 					newRootRef = {
 						name: obj.children[i].name,
