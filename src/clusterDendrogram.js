@@ -1,10 +1,6 @@
 'use strict';
 
-function createD3ClusterDendrogram(root, config = {}) {
-	var familyNames = {};
-
-	var fileRoot = config.root || '';
-
+function createD3ClusterDendrogram(root) {
 	var width = $(window).width();
 	var height = $(window).height();
 	var radius = Math.min(width, height) / 1.8;
@@ -20,9 +16,12 @@ function createD3ClusterDendrogram(root, config = {}) {
 	var x = d3.scale.linear().domain([0, width]).range([width, 0]);
 	var y = d3.scale.linear().domain([0, height]).range([height, 0]);
 
-	var zoom = d3.behavior.zoom().x(x).y(y)
+	var zoom = d3.behavior
+		.zoom()
+		.x(x)
+		.y(y)
 		.scaleExtent([0.1, 2.5])
-		.on('zoom', function(a, b, c) {
+		.on('zoom', () => {
 			var t = zoom.translate();
 
 			svg.attr('transform', `translate(${t[0]},${t[1]}) scale( ${zoom.scale()})`);
@@ -74,19 +73,12 @@ function createD3ClusterDendrogram(root, config = {}) {
 		.style('visibility', 'hidden')
 		.text('');
 
-	var tooltipText = tooltip.append('div');
-	var tooltipImg = tooltip.append('img');
+	tooltip.append('div');
 
 	steps
 		.filter(function(d) {
-			if (d.screenshot && d.screenshot.original) {
-				d.originalScreenshot = d.screenshot.original;
-
-				if (d.screenshot.failure) {
-					d.failedScreenshot = d.screenshot.failure;
-					d.latestScreenshot = d.screenshot.latest;
-					this.setAttribute('class', `${this.className.baseVal} screenshotFail`);
-				}
+			if (d.screenshot && d.screenshot.original && d.screenshot.failure) {
+				this.setAttribute('class', `${this.className.baseVal} screenshotFail`);
 			}
 
 			return !!d.screenshot;
@@ -96,9 +88,9 @@ function createD3ClusterDendrogram(root, config = {}) {
 			$('body').trigger({
 				type: 'screenshot',
 				name: e.name,
-				diff: e.failedScreenshot,
-				latest: e.latestScreenshot,
-				original: e.originalScreenshot,
+				diff: e.screenshot.failure,
+				latest: e.screenshot.latest,
+				original: e.screenshot.original,
 				element: this
 			});
 		});
@@ -208,13 +200,14 @@ function pieTooltip(g) {
 
 	var tooltipText = tooltip.append('div');
 
-	g.on('mouseover', function(e) {
-		if (tooltip.style('visibility') === 'hidden') {
-			tooltipText.text(e.data.name.replace('.json', ''));
-		}
+	g
+		.on('mouseover', function(e) {
+			if (tooltip.style('visibility') === 'hidden') {
+				tooltipText.text(e.data.name.replace('.json', ''));
+			}
 
-		return tooltip.style('visibility', 'visible');
-	})
+			return tooltip.style('visibility', 'visible');
+		})
 		.on('mousemove', function() {
 			return mousemove(tooltip);
 		})
@@ -224,22 +217,30 @@ function pieTooltip(g) {
 }
 
 function mousemove(tooltip) {
+	const cursorOffset = 10;
 	var width = Number(tooltip.style('width').replace('px', ''));
 	var height = Number(tooltip.style('height').replace('px', ''));
-	var right = d3.event.pageX + 10 + width;
-	var top = d3.event.pageY - 10 + height;
+	var right = d3.event.pageX + cursorOffset + width;
+	var top = d3.event.pageY - cursorOffset + height;
 
-	if (right > document.body.clientWidth) {
-		right = d3.event.pageX - 10 - width;
-	} else {
-		right = d3.event.pageX + 10;
+	function positionHorizontaly() {
+		if (right > document.body.clientWidth) {
+			right = d3.event.pageX - cursorOffset - width;
+		} else {
+			right = d3.event.pageX + cursorOffset;
+		}
 	}
 
-	if (top > document.body.clientHeight) {
-		top = d3.event.pageY - 10 - height;
-	} else {
-		top = d3.event.pageY - 10;
+	function positionVerticaly() {
+		if (top > document.body.clientHeight) {
+			top = d3.event.pageY - cursorOffset - height;
+		} else {
+			top = d3.event.pageY - cursorOffset;
+		}
 	}
+
+	positionHorizontaly();
+	positionVerticaly();
 
 	return tooltip.style('top', `${top}px`).style('left', `${right}px`);
 }

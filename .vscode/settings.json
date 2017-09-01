@@ -2,5 +2,8 @@
 	"eslint.enable": true,
 	"editor.formatOnSave": false,
 	"editor.insertSpaces": false,
-	"files.insertFinalNewline": true
+	"files.insertFinalNewline": true,
+	"search.exclude": {
+		"**/bundle.js": true
+	}
 }
