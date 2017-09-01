@@ -1,5 +1,7 @@
 'use strict';
 
+let common = require('./common.js');
+
 function createD3ClusterDendrogram(root) {
 	var width = $(window).width();
 	var height = $(window).height();
@@ -13,27 +15,16 @@ function createD3ClusterDendrogram(root) {
 			return [d.y, d.x / 180 * Math.PI];
 		});
 
-	var x = d3.scale.linear().domain([0, width]).range([width, 0]);
-	var y = d3.scale.linear().domain([0, height]).range([height, 0]);
-
-	var zoom = d3.behavior
-		.zoom()
-		.x(x)
-		.y(y)
-		.scaleExtent([0.1, 2.5])
-		.on('zoom', () => {
-			var t = zoom.translate();
-
-			svg.attr('transform', `translate(${t[0]},${t[1]}) scale( ${zoom.scale()})`);
-		});
-
-	var svg = d3
+	let svgElement = d3
 		.select('#canvas')
-		.append('svg')
+		.append('svg');
+	let svg = svgElement.append('g');
+	let zoom = common.createZoomBehavior(svg, width, height);
+
+	svgElement
 		.call(zoom)
 		.attr('width', width)
-		.attr('height', height)
-		.append('g');
+		.attr('height', height);
 
 	var nodes = cluster.nodes(root);
 

@@ -1,5 +1,7 @@
 'use strict';
 
+let common = require('./common.js');
+
 function updateClassNames(svg) {
 	svg.selectAll('.step')
 		.filter((d) => !d.isDecision && !d.isChance && !d.name)
@@ -30,36 +32,6 @@ function updateClassNames(svg) {
 		.classed('fail', true);
 }
 
-function createTooltip() {
-	var tooltip = d3.select('#canvas')
-		.append('div')
-		.attr('class', 'tooltip')
-		.style('position', 'absolute')
-		.style('z-index', '10')
-		.style('visibility', 'hidden')
-		.text('');
-
-	tooltip.append('div');
-}
-
-function createZoomBehavior(svg, x, y) {
-	const extentMin = 0.1;
-	const extentMax = 2.5;
-
-	let zoom = d3.behavior
-		.zoom()
-		.x(x)
-		.y(y)
-		.scaleExtent([extentMin, extentMax])
-		.on('zoom', () => {
-			var t = zoom.translate();
-
-			svg.attr('transform', `translate(${t[0]},${t[1]}) scale( ${zoom.scale()})`);
-		});
-
-	return zoom;
-}
-
 function createD3Tree(root) {
 	var width = $(window).width();
 	var height = $(window).height();
@@ -69,18 +41,16 @@ function createD3Tree(root) {
 	var nodes = cluster.nodes(root);
 	var links = cluster.links(nodes);
 
-	var x = d3.scale.linear().domain([0, width]).range([width, 0]);
-	var y = d3.scale.linear().domain([0, height]).range([height, 0]);
-
-	let zoom = createZoomBehavior(svg, x, y);
-
-	var svg = d3
+	let svgElement = d3
 		.select('#canvas')
-		.append('svg')
+		.append('svg');
+	let svg = svgElement.append('g');
+	let zoom = common.createZoomBehavior(svg, width, height);
+
+	svgElement
 		.call(zoom)
 		.attr('width', width)
-		.attr('height', height)
-		.append('g');
+		.attr('height', height);
 
 	d3.select(self.frameElement).style('height', `${height}px`);
 
@@ -101,7 +71,7 @@ function createD3Tree(root) {
 		.attr('transform', (d) => `translate(${d.y},${d.x})`);
 
 	updateClassNames(svg);
-	createTooltip();
+	common.createTooltip();
 
 	node.append('circle').attr('r', 8);
 
