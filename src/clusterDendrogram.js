@@ -13,7 +13,9 @@ function createD3ClusterDendrogram(root, config = {}) {
 		.size([360, radius]);
 
 	var diagonal = d3.svg.diagonal.radial()
-		.projection(function(d) { return [d.y, d.x / 180 * Math.PI]; });
+		.projection(function(d) {
+			return [d.y, d.x / 180 * Math.PI];
+		});
 
 	var x = d3.scale.linear().domain([0, width]).range([width, 0]);
 	var y = d3.scale.linear().domain([0, height]).range([height, 0]);
@@ -22,7 +24,8 @@ function createD3ClusterDendrogram(root, config = {}) {
 		.scaleExtent([0.1, 2.5])
 		.on('zoom', function(a, b, c) {
 			var t = zoom.translate();
-			svg.attr('transform', 'translate(' + (t[0]) + ',' + (t[1]) + ') scale( ' + zoom.scale() + ')');
+
+			svg.attr('transform', `translate(${t[0]},${t[1]}) scale( ${zoom.scale()})`);
 		});
 
 	var svg = d3
@@ -46,7 +49,9 @@ function createD3ClusterDendrogram(root, config = {}) {
 		.data(nodes)
 		.enter().append('g')
 		.attr('class', 'step')
-		.attr('transform', function(d) { return 'rotate(' + (d.x - 90) + ')translate(' + d.y + ')'; })
+		.attr('transform', function(d) {
+			return `rotate(${d.x - 90})translate(${d.y})`;
+		});
 
 	var steps = svg.selectAll('.step');
 
@@ -73,20 +78,17 @@ function createD3ClusterDendrogram(root, config = {}) {
 	var tooltipImg = tooltip.append('img');
 
 	steps
-		.filter(function(d, i) {
-			var _this = this;
-			var failedScreenshot;
-
+		.filter(function(d) {
 			if (d.screenshot && d.screenshot.original) {
-
 				d.originalScreenshot = d.screenshot.original;
 
 				if (d.screenshot.failure) {
 					d.failedScreenshot = d.screenshot.failure;
 					d.latestScreenshot = d.screenshot.latest;
-					_this.setAttribute('class', _this.className.baseVal + ' screenshotFail');
+					this.setAttribute('class', `${this.className.baseVal} screenshotFail`);
 				}
 			}
+
 			return !!d.screenshot;
 		})
 		.classed('screenshot', true)
@@ -108,13 +110,12 @@ function createD3ClusterDendrogram(root, config = {}) {
 
 	rootPie(radius, svg, rootTests);
 
-	zoom.scale(.75);
+	zoom.scale(0.75);
 	zoom.translate([width / 2, height / 2]);
 	zoom.event(svg);
 }
 
 function getGroupInfo(array) {
-	var key;
 	var tots = {};
 	var newArray = [];
 
@@ -128,21 +129,14 @@ function getGroupInfo(array) {
 		}
 	});
 
-	for (key in tots) {
+	Object.keys(tots).forEach((key) => {
 		newArray.push({
 			value: tots[key],
 			name: key
 		});
-	}
+	});
 
 	return newArray;
-}
-
-function get_random_color() {
-	function c() {
-		return Math.floor((Math.random() * 128) + 128).toString(16);
-	}
-	return '#' + c() + c() + c();
 }
 
 function groupPie(radius, svg, data) {
@@ -159,7 +153,6 @@ function groupPie(radius, svg, data) {
 }
 
 function rootPie(radius, svg, data) {
-
 	var color = d3.scale.ordinal()
 		.range(['#CCD2E3',
 			'#D5E1ED',
@@ -183,9 +176,11 @@ function pie(name, radius, offset, color, svg, data) {
 
 	var pie = d3.layout.pie()
 		.sort(null)
-		.value(function(d) { return d.value; });
+		.value(function(d) {
+			return d.value;
+		});
 
-	var g = svg.selectAll('.arc' + name)
+	var g = svg.selectAll(`.arc${name}`)
 		.data(pie(data))
 		.enter()
 		.append('g')
@@ -193,7 +188,9 @@ function pie(name, radius, offset, color, svg, data) {
 
 	g.append('path')
 		.attr('d', arc)
-		.style('fill', function(d) { return color(d.data.name); });
+		.style('fill', function(d) {
+			return color(d.data.name);
+		});
 
 	g.classed(name, true);
 
@@ -215,6 +212,7 @@ function pieTooltip(g) {
 		if (tooltip.style('visibility') === 'hidden') {
 			tooltipText.text(e.data.name.replace('.json', ''));
 		}
+
 		return tooltip.style('visibility', 'visible');
 	})
 		.on('mousemove', function() {
@@ -242,7 +240,8 @@ function mousemove(tooltip) {
 	} else {
 		top = d3.event.pageY - 10;
 	}
-	return tooltip.style('top', top + 'px').style('left', right + 'px');
+
+	return tooltip.style('top', `${top}px`).style('left', `${right}px`);
 }
 
 function getLeafInfo(obj) {
