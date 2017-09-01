@@ -12,7 +12,7 @@ function updateSteps(svg) {
 	applyClass(steps, 'isActive', 'active');
 	applyClass(svg.selectAll('.active'), 'isFailed', 'fail');
 
-	handleStepsHover(steps);
+	common.handleStepsHover(steps);
 }
 
 function drawPaths(svg, root, diagonal, radius) {
@@ -51,28 +51,6 @@ function getDiagonal() {
 		});
 
 	return diagonal;
-}
-
-function handleStepsHover(steps) {
-	steps
-		.filter(function(d) {
-			if (d.screenshot && d.screenshot.original && d.screenshot.failure) {
-				this.setAttribute('class', `${this.className.baseVal} screenshotFail`);
-			}
-
-			return !!d.screenshot;
-		})
-		.classed('screenshot', true)
-		.on('mouseover', function(e) {
-			$('body').trigger({
-				type: 'screenshot',
-				name: e.name,
-				diff: e.screenshot.failure,
-				latest: e.screenshot.latest,
-				original: e.screenshot.original,
-				element: this
-			});
-		});
 }
 
 function createSvg(width, height) {
