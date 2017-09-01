@@ -139,7 +139,7 @@ function doDefault(data) {
 
 	_.forEach(data, function(value, key) {
 		combined.children.push(value);
-		value.name = key;
+		value.groupName = key;
 	});
 
 	createD3ClusterDendrogram($.extend(true, {}, combined), {

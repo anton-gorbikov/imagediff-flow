@@ -229,7 +229,7 @@ function getLeafInfo(obj) {
 
 				if (isRoot) {
 					newRootRef = {
-						name: obj.children[i].name,
+						name: obj.children[i].groupName,
 						value: 0,
 						deep: 0
 					};
