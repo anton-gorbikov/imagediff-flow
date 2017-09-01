@@ -1,17 +1,17 @@
 'use strict';
 
-function createTooltip() {
+function createTooltip(className = 'tooltip') {
 	let tooltip = d3.select('#canvas')
 		.append('div')
-		.attr('class', 'tooltip')
+		.attr('class', className)
 		.style('position', 'absolute')
 		.style('z-index', '10')
 		.style('visibility', 'hidden')
 		.text('');
 
-	tooltip.append('div');
+	let text = tooltip.append('div');
 
-	return tooltip;
+	return { tooltip, text };
 }
 
 function createZoomBehavior(svg, width, height) {

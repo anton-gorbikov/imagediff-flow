@@ -54,9 +54,10 @@ function createD3Tree(root) {
 
 	d3.select(self.frameElement).style('height', `${height}px`);
 
-	var link = svg.selectAll('.link')
+	svg.selectAll('.link')
 		.data(links)
-		.enter().append('path')
+		.enter()
+		.append('path')
 		.attr('class', 'link')
 		.attr('d', diagonal);
 
