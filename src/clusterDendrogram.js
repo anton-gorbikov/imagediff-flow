@@ -15,10 +15,14 @@ function updateSteps(svg) {
 	handleStepsHover(steps);
 }
 
-function drawPaths(svg, cluster, root, diagonal) {
+function drawPaths(svg, root, diagonal, radius) {
 	const angle = 90;
 	const nodeRadius = 6;
+	const circle = 360;
 
+	let cluster = d3.layout
+		.cluster()
+		.size([circle, radius]);
 	let nodes = cluster.nodes(root);
 
 	svg.selectAll('path.link')
@@ -71,14 +75,8 @@ function handleStepsHover(steps) {
 		});
 }
 
-function createD3ClusterDendrogram(root) {
-	var width = $(window).width();
-	var height = $(window).height();
-	var radius = Math.min(width, height) / 1.8;
-
-	var cluster = d3.layout.cluster()
-		.size([360, radius]);
-
+function createSvg(width, height) {
+	const scale = 0.75;
 	let svgElement = d3
 		.select('#canvas')
 		.append('svg');
@@ -90,19 +88,32 @@ function createD3ClusterDendrogram(root) {
 		.attr('width', width)
 		.attr('height', height);
 
-	drawPaths(svg, cluster, root, getDiagonal());
+	zoom.scale(scale);
+	zoom.translate([width / 2, height / 2]);
+	zoom.event(svg);
+
+	return svg;
+}
+
+function createD3ClusterDendrogram(root) {
+	const adjustment = 1.8;
+	let width = $(window).width();
+	let height = $(window).height();
+	let radius = Math.min(width, height) / adjustment;
+	let svg = createSvg(width, height);
+
+	drawPaths(svg, root, getDiagonal(), radius);
 	common.createTooltip();
 	updateSteps(svg);
+	drawPies(svg, radius, root);
+}
 
+function drawPies(svg, radius, root) {
 	var rootTests = getLeafInfo(root);
 	var groups = getGroupInfo(rootTests);
 
 	groupPie(radius, svg, groups);
 	rootPie(radius, svg, rootTests);
-
-	zoom.scale(0.75);
-	zoom.translate([width / 2, height / 2]);
-	zoom.event(svg);
 }
 
 function getGroupInfo(array) {
@@ -112,7 +123,7 @@ function getGroupInfo(array) {
 	array.forEach(function(item) {
 		var stem = item.name.split(/\/|\\/).shift();
 
-		if (tots[stem] !== void 0) {
+		if (Number.isInteger(tots[stem])) {
 			tots[stem] += item.value;
 		} else {
 			tots[stem] = 0;
