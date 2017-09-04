@@ -40,11 +40,13 @@ module.exports.init = (options) => {
 					let isLast = index === tests.length - 1;
 
 					_.extend(child, {
+						moduleName: moduleName,
 						name: test.name,
-						isBranchRoot: !isLast,
-						isDecisionRoot: false,
-						isChanceRoot: false,
 						isActive: true,
+						isBranchRoot: !isLast,
+						isChanceRoot: false,
+						isDecisionRoot: false,
+						isFailed: test.failed,
 						screenshot: getScreenshotData(moduleName, test),
 						children: !isLast ? [{}] : null
 					});
@@ -78,7 +80,9 @@ module.exports.init = (options) => {
 	}
 
 	function rebaseImage(request, response) {
-		let { original, latest } = request.query;
+		let { moduleName, testName } = request.query;
+		let original = `${options.originalsPath}/${moduleName}/${testName}.png`;
+		let latest = `${options.resultsPath}/${moduleName}/${testName}.png`;
 
 		fs.createReadStream(getPath(latest))
 			.pipe(fs.createWriteStream(getPath(original)));

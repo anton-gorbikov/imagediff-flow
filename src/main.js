@@ -26,11 +26,11 @@ function initialiseSideBar() {
 
 		if (e.latest) {
 			rebaseBtn.data({
-				latest: e.latest,
-				original: e.original,
+				moduleName: e.moduleName,
+				testName: e.name,
 				svgElement: e.element
 			});
-			if (e.element.className.baseVal.indexOf('screenshotFail') !== -1) {
+			if (!e.element.classList.contains('failed')) {
 				rebaseSuccessBtn.hide();
 				rebaseBtn.show();
 			} else {
@@ -47,12 +47,12 @@ function initialiseSideBar() {
 	});
 
 	rebaseBtn.click(function(event) {
-		let { original, latest, svgElement } = rebaseBtn.data();
+		let { moduleName, testName, svgElement } = rebaseBtn.data();
 
-		$.get('rebase', { original, latest }, function() {
+		$.get('rebase', { moduleName, testName }, function() {
 			rebaseBtn.hide();
 			rebaseSuccessBtn.show();
-			svgElement.className.baseVal = svgElement.className.baseVal.replace('screenshotFail', '');
+			svgElement.classList.remove('failed');
 		});
 
 		event.preventDefault();

@@ -15,9 +15,8 @@ svg {
 .chance circle { fill: #DDD; }
 .screenshot circle { fill: #49BF70; cursor: pointer; }
 .screenshot:hover circle { fill: #1A4F1D; }
-.fail circle { fill: #4A0200; }
 
-.screenshotFail circle {
+.fail circle {
 	cursor: pointer;
 	fill: #4A0200;
 	transition: all 1s ease-in-out;

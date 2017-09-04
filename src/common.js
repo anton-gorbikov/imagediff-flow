@@ -43,18 +43,13 @@ function createZoomBehavior(svg, width, height) {
 
 function handleStepsHover(steps) {
 	steps
-		.filter(function(d) {
-			if (d.screenshot && d.screenshot.original && d.screenshot.failure) {
-				this.setAttribute('class', `${this.className.baseVal} screenshotFail`);
-			}
-
-			return !!d.screenshot;
-		})
+		.filter((d) => d.screenshot)
 		.classed('screenshot', true)
 		.on('mouseover', function(e) {
 			$('body').trigger({
 				type: 'screenshot',
 				name: e.name,
+				moduleName: e.moduleName,
 				diff: e.screenshot.failure,
 				latest: e.screenshot.latest,
 				original: e.screenshot.original,
