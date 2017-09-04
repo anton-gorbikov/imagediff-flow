@@ -1,201 +1,174 @@
 'use strict';
 
-function createD3ClusterDendrogram(root, config) {
-	config = config || {};
+let common = require('./common.js');
 
-	var familyNames = {};
-
-	var fileRoot = config.root || '';
-
-	var width = $(window).width();
-	var height = $(window).height();
-	var radius = Math.min(width, height) / 1.8;
-
-	var cluster = d3.layout.cluster()
-		.size([360, radius]);
-
-	var diagonal = d3.svg.diagonal.radial()
-		.projection(function(d) { return [d.y, d.x / 180 * Math.PI]; });
-
-	var x = d3.scale.linear().domain([0, width]).range([width, 0]);
-	var y = d3.scale.linear().domain([0, height]).range([height, 0]);
-
-	var zoom = d3.behavior.zoom().x(x).y(y)
-		.scaleExtent([0.1, 2.5])
-		.on("zoom", function(a, b, c) {
-			var t = zoom.translate();
-			svg.attr("transform", "translate(" + (t[0]) + "," + (t[1]) + ") scale( " + zoom.scale() + ")");
-		});
-
-	var svg = d3
-		.select("#canvas")
-		.append("svg")
-		.call(zoom)
-		.attr("width", width)
-		.attr("height", height)
-		.append("g");
-
-	var nodes = cluster.nodes(root);
-
-	var link = svg.selectAll("path.link")
-		.data(cluster.links(nodes))
-		.enter()
-		.append("path")
-		.attr("class", "link-subtle")
-		.attr("d", diagonal);
-
-	var node = svg.selectAll("g.node")
-		.data(nodes)
-		.enter().append("g")
-		.attr("class", "step")
-		.attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
-
-	var steps = svg.selectAll(".step");
+function updateSteps(svg) {
+	let steps = svg.selectAll('.step');
 
 	applyClass(steps, 'isDecision', 'decision');
 	applyClass(steps, 'isChanceRoot', 'chanceRoot');
 	applyClass(steps, 'isDecisionRoot', 'decisionRoot');
 	applyClass(steps, 'isChance', 'chance');
 	applyClass(steps, 'isActive', 'active');
+	applyClass(svg.selectAll('.active'), 'isFailed', 'fail');
 
-	applyClass(svg.selectAll(".active"), 'isFailed', 'fail');
+	common.handleStepsHover(steps);
+}
 
-	node.append("circle")
-		.attr("r", 4);
+function drawPaths(svg, root, diagonal, radius) {
+	const angle = 90;
+	const nodeRadius = 6;
+	const circle = 360;
 
-	var tooltip = d3.select("#canvas")
-		.append("div")
-		.attr("class", "tooltip")
-		.style("position", "absolute")
-		.style("z-index", "10")
-		.style("visibility", "hidden")
-		.text("");
+	let cluster = d3.layout
+		.cluster()
+		.size([circle, radius]);
+	let nodes = cluster.nodes(root);
 
-	var tooltipText = tooltip.append("div");
-	var tooltipImg = tooltip.append("img");
+	svg.selectAll('path.link')
+		.data(cluster.links(nodes))
+		.enter()
+		.append('path')
+		.attr('class', 'link-subtle')
+		.attr('d', diagonal);
 
-	steps
-		.filter(function(d, i) {
-			var _this = this;
-			var failedScreenshot;
+	svg.selectAll('g.node')
+		.data(nodes)
+		.enter()
+		.append('g')
+		.attr('class', 'step')
+		.attr('transform', (d) => `rotate(${d.x - angle})translate(${d.y})`)
+		.append('circle')
+		.attr('r', nodeRadius);
+}
 
-			if (d.screenshot && d.screenshot.original) {
+function getDiagonal() {
+	const angle = 180;
 
-				d.originalScreenshot = d.screenshot.original;
-
-				if (d.screenshot.failure) {
-					d.failedScreenshot = d.screenshot.failure;
-					d.latestScreenshot = d.screenshot.latest;
-					_this.setAttribute("class", _this.className.baseVal + ' screenshotFail');
-				}
-			}
-			return !!d.screenshot;
-		})
-		.classed('screenshot', true)
-		.on("mouseover", function(e) {
-			$("body").trigger({
-				type: "screenshot",
-				name: e.name,
-				diff: e.failedScreenshot,
-				latest: e.latestScreenshot,
-				original: e.originalScreenshot,
-				element: this
-			});
+	let diagonal = d3.svg.diagonal.radial()
+		.projection(function(d) {
+			return [d.y, d.x / angle * Math.PI];
 		});
 
+	return diagonal;
+}
+
+function createSvg(width, height) {
+	const scale = 0.75;
+	let svgElement = d3
+		.select('#canvas')
+		.append('svg');
+	let svg = svgElement.append('g');
+	let zoom = common.createZoomBehavior(svg, width, height);
+
+	svgElement
+		.call(zoom)
+		.attr('width', width)
+		.attr('height', height);
+
+	zoom.scale(scale);
+	zoom.translate([width / 2, height / 2]);
+	zoom.event(svg);
+
+	return svg;
+}
+
+function createD3ClusterDendrogram(root) {
+	const adjustment = 1.8;
+	let width = $(window).width();
+	let height = $(window).height();
+	let radius = Math.min(width, height) / adjustment;
+	let svg = createSvg(width, height);
+
+	drawPaths(svg, root, getDiagonal(), radius);
+	common.createTooltip();
+	updateSteps(svg);
+	drawPies(svg, radius, root);
+}
+
+function drawPies(svg, radius, root) {
 	var rootTests = getLeafInfo(root);
 	var groups = getGroupInfo(rootTests);
 
 	groupPie(radius, svg, groups);
-
 	rootPie(radius, svg, rootTests);
-
-	zoom.scale(.75);
-	zoom.translate([width / 2, height / 2]);
-	zoom.event(svg);
 }
 
 function getGroupInfo(array) {
-	var key;
 	var tots = {};
 	var newArray = [];
 
 	array.forEach(function(item) {
 		var stem = item.name.split(/\/|\\/).shift();
 
-		if (tots[stem] != void 0) {
+		if (Number.isInteger(tots[stem])) {
 			tots[stem] += item.value;
 		} else {
 			tots[stem] = 0;
 		}
 	});
 
-	for (key in tots) {
+	Object.keys(tots).forEach((key) => {
 		newArray.push({
 			value: tots[key],
 			name: key
 		});
-	}
+	});
 
 	return newArray;
 }
 
-function get_random_color() {
-	function c() {
-		return Math.floor((Math.random() * 128) + 128).toString(16);
-	}
-	return "#" + c() + c() + c();
-}
-
 function groupPie(radius, svg, data) {
-	var color = d3.scale.ordinal()
-		.range(["#DEDDDA",
-			"#D6D6D2",
-			"#BFBFBB",
-			"#CCCBC8",
-			"#C2C1BE"]);
+	const groupPieOffset = 46;
 
-	var g = pie('group-pie', radius, 46, color, svg, data);
+	let color = d3.scale
+		.ordinal()
+		.range(['#DEDDDA', '#D6D6D2', '#BFBFBB', '#CCCBC8', '#C2C1BE']);
+	let g = pie('group-pie', radius + groupPieOffset, color, svg, data);
 
 	pieTooltip(g);
 }
 
 function rootPie(radius, svg, data) {
+	const rootPieOffset = 8;
+	var color = d3.scale
+		.ordinal()
+		.range(['#CCD2E3', '#D5E1ED', '#CBD4D6', '#D5EDEC', '#CCE3DB']);
 
-	var color = d3.scale.ordinal()
-		.range(["#CCD2E3",
-			"#D5E1ED",
-			"#CBD4D6",
-			"#D5EDEC",
-			"#CCE3DB"]);
-
-	var g = pie('root-pie', radius, 8, color, svg, data);
+	var g = pie('root-pie', radius + rootPieOffset, color, svg, data);
 
 	pieTooltip(g);
 
-	g.on("click", function(e) {
+	g.on('click', function(e) {
 		window.location.hash = e.data.name;
 	});
 }
 
-function pie(name, radius, offset, color, svg, data) {
+function pie(name, radius, color, svg, data) {
+	const from = 8;
+	const to = 40;
+
 	var arc = d3.svg.arc()
-		.outerRadius(radius + offset + 40)
-		.innerRadius(radius + offset + 8);
+		.innerRadius(radius + from)
+		.outerRadius(radius + to);
 
 	var pie = d3.layout.pie()
 		.sort(null)
-		.value(function(d) { return d.value; });
+		.value(function(d) {
+			return d.value;
+		});
 
-	var g = svg.selectAll(".arc" + name)
+	var g = svg.selectAll(`.arc${name}`)
 		.data(pie(data))
 		.enter()
-		.append("g")
-		.attr("class", "arc");
+		.append('g')
+		.attr('class', 'arc');
 
-	g.append("path")
-		.attr("d", arc)
-		.style("fill", function(d) { return color(d.data.name); });
+	g.append('path')
+		.attr('d', arc)
+		.style('fill', function(d) {
+			return color(d.data.name);
+		});
 
 	g.classed(name, true);
 
@@ -203,61 +176,60 @@ function pie(name, radius, offset, color, svg, data) {
 }
 
 function pieTooltip(g) {
-	var tooltip = d3.select("#canvas")
-		.append("div")
-		.attr("class", "tooltip-label")
-		.style("position", "absolute")
-		.style("z-index", "10")
-		.style("visibility", "hidden")
-		.text("");
+	let { tooltip, text } = common.createTooltip('tooltip-label');
 
-	var tooltipText = tooltip.append("div");
+	g
+		.on('mouseover', function(e) {
+			if (tooltip.style('visibility') === 'hidden') {
+				text.text(e.data.name);
+			}
 
-	g.on("mouseover", function(e) {
-		if (tooltip.style("visibility") === "hidden") {
-			tooltipText.text(e.data.name.replace('.json', ''));
-		}
-		return tooltip.style("visibility", "visible");
-	})
-		.on("mousemove", function() {
-			return mousemove(tooltip);
+			return tooltip.style('visibility', 'visible');
 		})
-		.on("mouseout", function() {
-			return tooltip.style("visibility", "hidden");
-		});
+		.on('mousemove', () => mousemove(tooltip))
+		.on('mouseout', () => tooltip.style('visibility', 'hidden'));
 }
 
 function mousemove(tooltip) {
-	var width = Number(tooltip.style("width").replace('px', ''));
-	var height = Number(tooltip.style("height").replace('px', ''));
-	var right = d3.event.pageX + 10 + width;
-	var top = d3.event.pageY - 10 + height;
+	const cursorOffset = 10;
+	var width = Number(tooltip.style('width').replace('px', ''));
+	var height = Number(tooltip.style('height').replace('px', ''));
+	var right = d3.event.pageX + cursorOffset + width;
+	var top = d3.event.pageY - cursorOffset + height;
 
-	if (right > document.body.clientWidth) {
-		right = d3.event.pageX - 10 - width;
-	} else {
-		right = d3.event.pageX + 10;
+	function positionHorizontaly() {
+		if (right > document.body.clientWidth) {
+			right = d3.event.pageX - cursorOffset - width;
+		} else {
+			right = d3.event.pageX + cursorOffset;
+		}
 	}
 
-	if (top > document.body.clientHeight) {
-		top = d3.event.pageY - 10 - height;
-	} else {
-		top = d3.event.pageY - 10;
+	function positionVerticaly() {
+		if (top > document.body.clientHeight) {
+			top = d3.event.pageY - cursorOffset - height;
+		} else {
+			top = d3.event.pageY - cursorOffset;
+		}
 	}
-	return tooltip.style("top", top + "px").style("left", right + "px");
+
+	positionHorizontaly();
+	positionVerticaly();
+
+	return tooltip.style('top', `${top}px`).style('left', `${right}px`);
 }
 
 function getLeafInfo(obj) {
 	var roots = [];
 
 	function recurse(obj, root, isRoot) {
-		var newRootRef;
-
 		if (obj.children) {
 			for (let i = 0; i < obj.children.length; i++) {
+				let newRootRef = null;
+
 				if (isRoot) {
 					newRootRef = {
-						name: obj.children[i].name,
+						name: obj.children[i].groupName,
 						value: 0,
 						deep: 0
 					};
@@ -281,4 +253,4 @@ function applyClass(steps, prop, className) {
 	}).classed(className, true);
 }
 
-global.createD3ClusterDendrogram = createD3ClusterDendrogram;
+module.exports = createD3ClusterDendrogram;

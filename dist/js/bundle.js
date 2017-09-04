@@ -40317,205 +40317,177 @@ return jQuery;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],19:[function(require,module,exports){
-(function (global){
 'use strict';
 
-function createD3ClusterDendrogram(root, config) {
-	config = config || {};
+let common = require('./common.js');
 
-	var familyNames = {};
-
-	var fileRoot = config.root || '';
-
-	var width = $(window).width();
-	var height = $(window).height();
-	var radius = Math.min(width, height) / 1.8;
-
-	var cluster = d3.layout.cluster()
-		.size([360, radius]);
-
-	var diagonal = d3.svg.diagonal.radial()
-		.projection(function(d) { return [d.y, d.x / 180 * Math.PI]; });
-
-	var x = d3.scale.linear().domain([0, width]).range([width, 0]);
-	var y = d3.scale.linear().domain([0, height]).range([height, 0]);
-
-	var zoom = d3.behavior.zoom().x(x).y(y)
-		.scaleExtent([0.1, 2.5])
-		.on("zoom", function(a, b, c) {
-			var t = zoom.translate();
-			svg.attr("transform", "translate(" + (t[0]) + "," + (t[1]) + ") scale( " + zoom.scale() + ")");
-		});
-
-	var svg = d3
-		.select("#canvas")
-		.append("svg")
-		.call(zoom)
-		.attr("width", width)
-		.attr("height", height)
-		.append("g");
-
-	var nodes = cluster.nodes(root);
-
-	var link = svg.selectAll("path.link")
-		.data(cluster.links(nodes))
-		.enter()
-		.append("path")
-		.attr("class", "link-subtle")
-		.attr("d", diagonal);
-
-	var node = svg.selectAll("g.node")
-		.data(nodes)
-		.enter().append("g")
-		.attr("class", "step")
-		.attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
-
-	var steps = svg.selectAll(".step");
+function updateSteps(svg) {
+	let steps = svg.selectAll('.step');
 
 	applyClass(steps, 'isDecision', 'decision');
 	applyClass(steps, 'isChanceRoot', 'chanceRoot');
 	applyClass(steps, 'isDecisionRoot', 'decisionRoot');
 	applyClass(steps, 'isChance', 'chance');
 	applyClass(steps, 'isActive', 'active');
+	applyClass(svg.selectAll('.active'), 'isFailed', 'fail');
 
-	applyClass(svg.selectAll(".active"), 'isFailed', 'fail');
+	common.handleStepsHover(steps);
+}
 
-	node.append("circle")
-		.attr("r", 4);
+function drawPaths(svg, root, diagonal, radius) {
+	const angle = 90;
+	const nodeRadius = 6;
+	const circle = 360;
 
-	var tooltip = d3.select("#canvas")
-		.append("div")
-		.attr("class", "tooltip")
-		.style("position", "absolute")
-		.style("z-index", "10")
-		.style("visibility", "hidden")
-		.text("");
+	let cluster = d3.layout
+		.cluster()
+		.size([circle, radius]);
+	let nodes = cluster.nodes(root);
 
-	var tooltipText = tooltip.append("div");
-	var tooltipImg = tooltip.append("img");
+	svg.selectAll('path.link')
+		.data(cluster.links(nodes))
+		.enter()
+		.append('path')
+		.attr('class', 'link-subtle')
+		.attr('d', diagonal);
 
-	steps
-		.filter(function(d, i) {
-			var _this = this;
-			var failedScreenshot;
+	svg.selectAll('g.node')
+		.data(nodes)
+		.enter()
+		.append('g')
+		.attr('class', 'step')
+		.attr('transform', (d) => `rotate(${d.x - angle})translate(${d.y})`)
+		.append('circle')
+		.attr('r', nodeRadius);
+}
 
-			if (d.screenshot && d.screenshot.original) {
+function getDiagonal() {
+	const angle = 180;
 
-				d.originalScreenshot = d.screenshot.original;
-
-				if (d.screenshot.failure) {
-					d.failedScreenshot = d.screenshot.failure;
-					d.latestScreenshot = d.screenshot.latest;
-					_this.setAttribute("class", _this.className.baseVal + ' screenshotFail');
-				}
-			}
-			return !!d.screenshot;
-		})
-		.classed('screenshot', true)
-		.on("mouseover", function(e) {
-			$("body").trigger({
-				type: "screenshot",
-				name: e.name,
-				diff: e.failedScreenshot,
-				latest: e.latestScreenshot,
-				original: e.originalScreenshot,
-				element: this
-			});
+	let diagonal = d3.svg.diagonal.radial()
+		.projection(function(d) {
+			return [d.y, d.x / angle * Math.PI];
 		});
 
+	return diagonal;
+}
+
+function createSvg(width, height) {
+	const scale = 0.75;
+	let svgElement = d3
+		.select('#canvas')
+		.append('svg');
+	let svg = svgElement.append('g');
+	let zoom = common.createZoomBehavior(svg, width, height);
+
+	svgElement
+		.call(zoom)
+		.attr('width', width)
+		.attr('height', height);
+
+	zoom.scale(scale);
+	zoom.translate([width / 2, height / 2]);
+	zoom.event(svg);
+
+	return svg;
+}
+
+function createD3ClusterDendrogram(root) {
+	const adjustment = 1.8;
+	let width = $(window).width();
+	let height = $(window).height();
+	let radius = Math.min(width, height) / adjustment;
+	let svg = createSvg(width, height);
+
+	drawPaths(svg, root, getDiagonal(), radius);
+	common.createTooltip();
+	updateSteps(svg);
+	drawPies(svg, radius, root);
+}
+
+function drawPies(svg, radius, root) {
 	var rootTests = getLeafInfo(root);
 	var groups = getGroupInfo(rootTests);
 
 	groupPie(radius, svg, groups);
-
 	rootPie(radius, svg, rootTests);
-
-	zoom.scale(.75);
-	zoom.translate([width / 2, height / 2]);
-	zoom.event(svg);
 }
 
 function getGroupInfo(array) {
-	var key;
 	var tots = {};
 	var newArray = [];
 
 	array.forEach(function(item) {
 		var stem = item.name.split(/\/|\\/).shift();
 
-		if (tots[stem] != void 0) {
+		if (Number.isInteger(tots[stem])) {
 			tots[stem] += item.value;
 		} else {
 			tots[stem] = 0;
 		}
 	});
 
-	for (key in tots) {
+	Object.keys(tots).forEach((key) => {
 		newArray.push({
 			value: tots[key],
 			name: key
 		});
-	}
+	});
 
 	return newArray;
 }
 
-function get_random_color() {
-	function c() {
-		return Math.floor((Math.random() * 128) + 128).toString(16);
-	}
-	return "#" + c() + c() + c();
-}
-
 function groupPie(radius, svg, data) {
-	var color = d3.scale.ordinal()
-		.range(["#DEDDDA",
-			"#D6D6D2",
-			"#BFBFBB",
-			"#CCCBC8",
-			"#C2C1BE"]);
+	const groupPieOffset = 46;
 
-	var g = pie('group-pie', radius, 46, color, svg, data);
+	let color = d3.scale
+		.ordinal()
+		.range(['#DEDDDA', '#D6D6D2', '#BFBFBB', '#CCCBC8', '#C2C1BE']);
+	let g = pie('group-pie', radius + groupPieOffset, color, svg, data);
 
 	pieTooltip(g);
 }
 
 function rootPie(radius, svg, data) {
+	const rootPieOffset = 8;
+	var color = d3.scale
+		.ordinal()
+		.range(['#CCD2E3', '#D5E1ED', '#CBD4D6', '#D5EDEC', '#CCE3DB']);
 
-	var color = d3.scale.ordinal()
-		.range(["#CCD2E3",
-			"#D5E1ED",
-			"#CBD4D6",
-			"#D5EDEC",
-			"#CCE3DB"]);
-
-	var g = pie('root-pie', radius, 8, color, svg, data);
+	var g = pie('root-pie', radius + rootPieOffset, color, svg, data);
 
 	pieTooltip(g);
 
-	g.on("click", function(e) {
+	g.on('click', function(e) {
 		window.location.hash = e.data.name;
 	});
 }
 
-function pie(name, radius, offset, color, svg, data) {
+function pie(name, radius, color, svg, data) {
+	const from = 8;
+	const to = 40;
+
 	var arc = d3.svg.arc()
-		.outerRadius(radius + offset + 40)
-		.innerRadius(radius + offset + 8);
+		.innerRadius(radius + from)
+		.outerRadius(radius + to);
 
 	var pie = d3.layout.pie()
 		.sort(null)
-		.value(function(d) { return d.value; });
+		.value(function(d) {
+			return d.value;
+		});
 
-	var g = svg.selectAll(".arc" + name)
+	var g = svg.selectAll(`.arc${name}`)
 		.data(pie(data))
 		.enter()
-		.append("g")
-		.attr("class", "arc");
+		.append('g')
+		.attr('class', 'arc');
 
-	g.append("path")
-		.attr("d", arc)
-		.style("fill", function(d) { return color(d.data.name); });
+	g.append('path')
+		.attr('d', arc)
+		.style('fill', function(d) {
+			return color(d.data.name);
+		});
 
 	g.classed(name, true);
 
@@ -40523,61 +40495,60 @@ function pie(name, radius, offset, color, svg, data) {
 }
 
 function pieTooltip(g) {
-	var tooltip = d3.select("#canvas")
-		.append("div")
-		.attr("class", "tooltip-label")
-		.style("position", "absolute")
-		.style("z-index", "10")
-		.style("visibility", "hidden")
-		.text("");
+	let { tooltip, text } = common.createTooltip('tooltip-label');
 
-	var tooltipText = tooltip.append("div");
+	g
+		.on('mouseover', function(e) {
+			if (tooltip.style('visibility') === 'hidden') {
+				text.text(e.data.name);
+			}
 
-	g.on("mouseover", function(e) {
-		if (tooltip.style("visibility") === "hidden") {
-			tooltipText.text(e.data.name.replace('.json', ''));
-		}
-		return tooltip.style("visibility", "visible");
-	})
-		.on("mousemove", function() {
-			return mousemove(tooltip);
+			return tooltip.style('visibility', 'visible');
 		})
-		.on("mouseout", function() {
-			return tooltip.style("visibility", "hidden");
-		});
+		.on('mousemove', () => mousemove(tooltip))
+		.on('mouseout', () => tooltip.style('visibility', 'hidden'));
 }
 
 function mousemove(tooltip) {
-	var width = Number(tooltip.style("width").replace('px', ''));
-	var height = Number(tooltip.style("height").replace('px', ''));
-	var right = d3.event.pageX + 10 + width;
-	var top = d3.event.pageY - 10 + height;
+	const cursorOffset = 10;
+	var width = Number(tooltip.style('width').replace('px', ''));
+	var height = Number(tooltip.style('height').replace('px', ''));
+	var right = d3.event.pageX + cursorOffset + width;
+	var top = d3.event.pageY - cursorOffset + height;
 
-	if (right > document.body.clientWidth) {
-		right = d3.event.pageX - 10 - width;
-	} else {
-		right = d3.event.pageX + 10;
+	function positionHorizontaly() {
+		if (right > document.body.clientWidth) {
+			right = d3.event.pageX - cursorOffset - width;
+		} else {
+			right = d3.event.pageX + cursorOffset;
+		}
 	}
 
-	if (top > document.body.clientHeight) {
-		top = d3.event.pageY - 10 - height;
-	} else {
-		top = d3.event.pageY - 10;
+	function positionVerticaly() {
+		if (top > document.body.clientHeight) {
+			top = d3.event.pageY - cursorOffset - height;
+		} else {
+			top = d3.event.pageY - cursorOffset;
+		}
 	}
-	return tooltip.style("top", top + "px").style("left", right + "px");
+
+	positionHorizontaly();
+	positionVerticaly();
+
+	return tooltip.style('top', `${top}px`).style('left', `${right}px`);
 }
 
 function getLeafInfo(obj) {
 	var roots = [];
 
 	function recurse(obj, root, isRoot) {
-		var newRootRef;
-
 		if (obj.children) {
 			for (let i = 0; i < obj.children.length; i++) {
+				let newRootRef = null;
+
 				if (isRoot) {
 					newRootRef = {
-						name: obj.children[i].name,
+						name: obj.children[i].groupName,
 						value: 0,
 						deep: 0
 					};
@@ -40601,12 +40572,79 @@ function applyClass(steps, prop, className) {
 	}).classed(className, true);
 }
 
-global.createD3ClusterDendrogram = createD3ClusterDendrogram;
+module.exports = createD3ClusterDendrogram;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],20:[function(require,module,exports){
-(function (global){
+},{"./common.js":20}],20:[function(require,module,exports){
 'use strict';
+
+function createTooltip(className = 'tooltip') {
+	let tooltip = d3.select('#canvas')
+		.append('div')
+		.attr('class', className)
+		.style('position', 'absolute')
+		.style('z-index', '10')
+		.style('visibility', 'hidden')
+		.text('');
+
+	let text = tooltip.append('div');
+
+	return { tooltip, text };
+}
+
+function createZoomBehavior(svg, width, height) {
+	const extentMin = 0.1;
+	const extentMax = 2.5;
+
+	let x = d3.scale
+		.linear()
+		.domain([0, width])
+		.range([width, 0]);
+	let y = d3.scale
+		.linear()
+		.domain([0, height])
+		.range([height, 0]);
+
+	let zoom = d3.behavior
+		.zoom()
+		.x(x)
+		.y(y)
+		.scaleExtent([extentMin, extentMax])
+		.on('zoom', () => {
+			var t = zoom.translate();
+
+			svg.attr('transform', `translate(${t[0]},${t[1]}) scale( ${zoom.scale()})`);
+		});
+
+	return zoom;
+}
+
+function handleStepsHover(steps) {
+	steps
+		.filter((d) => d.screenshot)
+		.classed('screenshot', true)
+		.on('mouseover', function(e) {
+			$('body').trigger({
+				type: 'screenshot',
+				name: e.name,
+				moduleName: e.moduleName,
+				diff: e.screenshot.failure,
+				latest: e.screenshot.latest,
+				original: e.screenshot.original,
+				element: this
+			});
+		});
+}
+
+module.exports = {
+	createTooltip,
+	createZoomBehavior,
+	handleStepsHover
+};
+
+},{}],21:[function(require,module,exports){
+'use strict';
+
+let common = require('./common.js');
 
 function updateClassNames(svg) {
 	svg.selectAll('.step')
@@ -40638,115 +40676,117 @@ function updateClassNames(svg) {
 		.classed('fail', true);
 }
 
-function createD3Tree(root, config) {
-	config = config || {};
+function createSvg(width, height) {
+	const translation = 50;
 
-	var fileRoot = config.root || '';
+	let svgElement = d3
+		.select('#canvas')
+		.append('svg');
+	let svg = svgElement.append('g');
+	let zoom = common.createZoomBehavior(svg, width, height);
 
-	var width = $(window).width();
-	var height = $(window).height();
-	var cluster = d3.layout.cluster().size([height, width - 220]);
-	var diagonal = d3.svg.diagonal().projection(function(d) { return [d.y, d.x]; });
-
-	var nodes = cluster.nodes(root);
-	var links = cluster.links(nodes);
-
-	var x = d3.scale.linear().domain([0, width]).range([width, 0]);
-	var y = d3.scale.linear().domain([0, height]).range([height, 0]);
-
-	var zoom = d3.behavior.zoom().x(x).y(y)
-		.scaleExtent([0.1, 2.5])
-		.on("zoom", function(a, b, c) {
-			var t = zoom.translate();
-			svg.attr("transform", "translate(" + (t[0]) + "," + (t[1]) + ") scale( " + zoom.scale() + ")");
-		});
-
-	var svg = d3
-		.select("#canvas")
-		.append("svg")
+	svgElement
 		.call(zoom)
-		.attr("width", width)
-		.attr("height", height)
-		.append("g");
+		.attr('width', width)
+		.attr('height', height);
 
-	d3.select(self.frameElement).style("height", height + "px");
-
-	var link = svg.selectAll(".link")
-		.data(links)
-		.enter().append("path")
-		.attr("class", "link")
-		.attr("d", diagonal);
-
-	svg.selectAll(".link").filter(function(d, i) {
-		return !d.target.isDecision && !d.target.isChance && !d.target.name;
-	}).remove();
-
-	var node = svg.selectAll(".node")
-		.data(nodes)
-		.enter().append("g")
-		.attr("class", "step")
-		.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
-
-	updateClassNames(svg);
-
-	var tooltip = d3.select("#canvas")
-		.append("div")
-		.attr("class", "tooltip")
-		.style("position", "absolute")
-		.style("z-index", "10")
-		.style("visibility", "hidden")
-		.text("");
-
-	var tooltipText = tooltip.append("div");
-	var tooltipImg = tooltip.append("img");
-
-	node.append("circle").attr("r", 8);
-
-	svg.selectAll(".step")
-		.filter(function(d, i) {
-			var _this = this;
-			var failedScreenshot;
-
-			if (d.screenshot && d.screenshot.original) {
-				d.originalScreenshot = d.screenshot.original;
-				if (d.screenshot.failure) {
-					d.failedScreenshot = d.screenshot.failure;
-					d.latestScreenshot = d.screenshot.latest;
-					_this.setAttribute("class", _this.className.baseVal + ' screenshotFail');
-				}
-			}
-			return !!d.screenshot;
-		})
-		.classed('screenshot', true)
-		.on("mouseover", function(e) {
-			$("body").trigger({
-				type: "screenshot",
-				name: e.name,
-				diff: e.failedScreenshot,
-				latest: e.latestScreenshot,
-				original: e.originalScreenshot,
-				element: this
-			});
-		});
-
-	var dy = !!window.chrome ? 6 : 22;
-
-	node.append("text")
-		.attr("dx", function(d, e, f) { return d.isBranchRoot ? 8 : d.children ? -15 : 15; })
-		.attr("dy", function(d) { return d.isBranchRoot ? 22 : d.children ? dy : dy; })
-		.attr("class", function(d) { return d.isDecisionRoot ? 'text decisiontext' : d.isChanceRoot ? 'text chancetext' : d.children ? 'text steptext' : 'text endtext'; })
-		.attr("transform", function(d) { return (d.children && !d.isBranchRoot) ? "rotate(330)" : "rotate(0)"; })
-		.text(function(d) { return d.name.replace('.json', ''); });
+	d3.select(self.frameElement).style('height', `${height}px`);
 
 	zoom.scale(1);
-	zoom.translate([50, 50]);
+	zoom.translate([translation, translation]);
 	zoom.event(svg);
+
+	return svg;
 }
 
-global.createD3Tree = createD3Tree;
+function drawTree(svg, width, height, root) {
+	const offset = 220;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],21:[function(require,module,exports){
+	let cluster = d3.layout.cluster().size([height, width - offset]);
+	let nodes = cluster.nodes(root);
+	let links = cluster.links(nodes);
+	let diagonal = d3.svg.diagonal().projection((d) => [d.y, d.x]);
+
+	svg.selectAll('.link')
+		.data(links)
+		.enter()
+		.append('path')
+		.attr('class', 'link')
+		.attr('d', diagonal);
+
+	svg
+		.selectAll('.link')
+		.filter((d) => !d.target.isDecision && !d.target.isChance && !d.target.name)
+		.remove();
+
+	let node = svg.selectAll('.node')
+		.data(nodes)
+		.enter()
+		.append('g')
+		.attr('class', 'step')
+		.attr('transform', (d) => `translate(${d.y},${d.x})`);
+
+	return node;
+}
+
+function addLabels(node) {
+	// Some calculations, hence disabling ESLint
+	/* eslint-disable no-magic-numbers */
+	let dy = window.chrome ? 6 : 22;
+
+	node.append('text')
+		.attr('dx', (d) => {
+			let result = 15;
+
+			if (d.isBranchRoot) {
+				result = 8;
+			} else if (d.children) {
+				result = -15;
+			}
+
+			return result;
+		})
+		.attr('dy', function(d) {
+			return d.isBranchRoot ? 22 : dy;
+		})
+		.attr('class', function(d) {
+			let result = 'text endtext';
+
+			if (d.isDecisionRoot) {
+				result = 'text decisiontext';
+			} else if (d.isChanceRoot) {
+				result = 'text chancetext';
+			} else if (d.children) {
+				result = 'text steptext';
+			}
+
+			return result;
+		})
+		.attr('transform', function(d) {
+			return d.children && !d.isBranchRoot ? 'rotate(330)' : 'rotate(0)';
+		})
+		.text((d) => d.name);
+	/* eslint-enable no-magic-numbers */
+}
+
+function createD3Tree(root) {
+	const nodeRadius = 8;
+
+	let width = $(window).width();
+	let height = $(window).height();
+	let svg = createSvg(width, height);
+	let node = drawTree(svg, width, height, root);
+
+	updateClassNames(svg);
+	common.createTooltip();
+	node.append('circle').attr('r', nodeRadius);
+	common.handleStepsHover(svg.selectAll('.step'));
+	addLabels(node);
+}
+
+module.exports = createD3Tree;
+
+},{"./common.js":20}],22:[function(require,module,exports){
 'use strict';
 
 window.$ = window.jQuery = require('jquery');
@@ -40755,8 +40795,9 @@ window.d3 = require('d3');
 require('chosen-js');
 require('bootstrap');
 require('../node_modules/jasny-bootstrap/dist/js/jasny-bootstrap.min');
-require('./flowTree');
-require('./clusterDendrogram');
+
+let createD3Tree = require('./flowTree');
+let createD3ClusterDendrogram = require('./clusterDendrogram');
 
 getDataAndAppendDropdown();
 initialiseSideBar();
@@ -40774,11 +40815,11 @@ function initialiseSideBar() {
 
 		if (e.latest) {
 			rebaseBtn.data({
-				latest: e.latest,
-				original: e.original,
+				moduleName: e.moduleName,
+				testName: e.name,
 				svgElement: e.element
 			});
-			if (e.element.className.baseVal.indexOf('screenshotFail') !== -1) {
+			if (!e.element.classList.contains('failed')) {
 				rebaseSuccessBtn.hide();
 				rebaseBtn.show();
 			} else {
@@ -40794,14 +40835,16 @@ function initialiseSideBar() {
 		updateSideBar({});
 	});
 
-	rebaseBtn.click(function() {
-		let { original, latest, svgElement } = rebaseBtn.data();
+	rebaseBtn.click(function(event) {
+		let { moduleName, testName, svgElement } = rebaseBtn.data();
 
-		$.get('rebase', { original, latest }, function() {
+		$.get('rebase', { moduleName, testName }, function() {
 			rebaseBtn.hide();
 			rebaseSuccessBtn.show();
-			svgElement.className.baseVal = svgElement.className.baseVal.replace('screenshotFail', '');
+			svgElement.classList.remove('failed');
 		});
+
+		event.preventDefault();
 	});
 }
 
@@ -40829,18 +40872,17 @@ function toggleSideBarImages(e, prop) {
 
 function getDataAndAppendDropdown() {
 	$.getJSON('data', function(json) {
-
 		var dropdown = $('<select id="dropdown">');
 
 		dropdown.append('<option value="default" selected>View all</option>');
 
-		_.forEach(json, function(value, key) {
-			key = key.replace(/"/g, '');
-			dropdown.append('<option value="' + key + '">' + key.replace('.json', '') + '</option>');
-		});
+		Object.keys(json)
+			.map((key) => key.replace(/"/g, ''))
+			.forEach((key) => dropdown.append(`<option value="${key}">${key}</option>`));
 
-		dropdown.on('change', function(a, v) {
-			var val = dropdown.val();
+		dropdown.on('change', () => {
+			let val = dropdown.val();
+
 			if (val !== 'default') {
 				window.location.hash = val;
 			} else {
@@ -40861,27 +40903,18 @@ function getDataAndAppendDropdown() {
 }
 
 function processHash(data) {
-	var hash = window.location.hash.slice(1);
-	var searchTerm;
-	var found;
-	var combined;
-	var promises = [];
+	let hash = window.location.hash.slice(1);
+	let dropdown = $('#dropdown');
 
 	$('svg,.tooltip,.tooltip-label').remove();
 
-	$(dropdown).val(hash || 'default');
-	$(dropdown).trigger("chosen:updated");
+	dropdown.val(hash || 'default');
+	dropdown.trigger('chosen:updated');
 
-	if (hash && hash.indexOf('?') !== -1) {
-
-		searchTerm = hash.split('?')[1];
-
-	} else if (hash) {
-
+	if (hash) {
 		createD3Tree($.extend(true, {}, data[hash]), {
 			root: '/'
 		});
-
 	} else {
 		doDefault(data);
 	}
@@ -40897,7 +40930,7 @@ function doDefault(data) {
 
 	_.forEach(data, function(value, key) {
 		combined.children.push(value);
-		value.name = key;
+		value.groupName = key;
 	});
 
 	createD3ClusterDendrogram($.extend(true, {}, combined), {
@@ -40905,4 +40938,4 @@ function doDefault(data) {
 	});
 }
 
-},{"../node_modules/jasny-bootstrap/dist/js/jasny-bootstrap.min":16,"./clusterDendrogram":19,"./flowTree":20,"bootstrap":1,"chosen-js":14,"d3":15,"jquery":17,"lodash":18}]},{},[21]);
+},{"../node_modules/jasny-bootstrap/dist/js/jasny-bootstrap.min":16,"./clusterDendrogram":19,"./flowTree":21,"bootstrap":1,"chosen-js":14,"d3":15,"jquery":17,"lodash":18}]},{},[22]);

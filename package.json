@@ -1,10 +1,11 @@
 {
   "name": "imagediff-flow",
-  "version": "1.1.0",
+  "version": "1.1.3",
   "description": "Image diff workflow visual tool",
   "main": "index.js",
   "scripts": {
-    "build": "browserify src/main.js -o dist/js/bundle.js"
+    "build": "./node_modules/.bin/browserify src/main.js -o dist/js/bundle.js",
+    "lint": "./node_modules/.bin/eslint -c .eslintrc.js src/**/*.js"
   },
   "repository": {
     "type": "git",

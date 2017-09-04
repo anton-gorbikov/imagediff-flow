@@ -6,8 +6,9 @@ window.d3 = require('d3');
 require('chosen-js');
 require('bootstrap');
 require('../node_modules/jasny-bootstrap/dist/js/jasny-bootstrap.min');
-require('./flowTree');
-require('./clusterDendrogram');
+
+let createD3Tree = require('./flowTree');
+let createD3ClusterDendrogram = require('./clusterDendrogram');
 
 getDataAndAppendDropdown();
 initialiseSideBar();
@@ -25,11 +26,11 @@ function initialiseSideBar() {
 
 		if (e.latest) {
 			rebaseBtn.data({
-				latest: e.latest,
-				original: e.original,
+				moduleName: e.moduleName,
+				testName: e.name,
 				svgElement: e.element
 			});
-			if (e.element.className.baseVal.indexOf('screenshotFail') !== -1) {
+			if (!e.element.classList.contains('failed')) {
 				rebaseSuccessBtn.hide();
 				rebaseBtn.show();
 			} else {
@@ -45,14 +46,16 @@ function initialiseSideBar() {
 		updateSideBar({});
 	});
 
-	rebaseBtn.click(function() {
-		let { original, latest, svgElement } = rebaseBtn.data();
+	rebaseBtn.click(function(event) {
+		let { moduleName, testName, svgElement } = rebaseBtn.data();
 
-		$.get('rebase', { original, latest }, function() {
+		$.get('rebase', { moduleName, testName }, function() {
 			rebaseBtn.hide();
 			rebaseSuccessBtn.show();
-			svgElement.className.baseVal = svgElement.className.baseVal.replace('screenshotFail', '');
+			svgElement.classList.remove('failed');
 		});
+
+		event.preventDefault();
 	});
 }
 
@@ -80,18 +83,17 @@ function toggleSideBarImages(e, prop) {
 
 function getDataAndAppendDropdown() {
 	$.getJSON('data', function(json) {
-
 		var dropdown = $('<select id="dropdown">');
 
 		dropdown.append('<option value="default" selected>View all</option>');
 
-		_.forEach(json, function(value, key) {
-			key = key.replace(/"/g, '');
-			dropdown.append('<option value="' + key + '">' + key.replace('.json', '') + '</option>');
-		});
+		Object.keys(json)
+			.map((key) => key.replace(/"/g, ''))
+			.forEach((key) => dropdown.append(`<option value="${key}">${key}</option>`));
 
-		dropdown.on('change', function(a, v) {
-			var val = dropdown.val();
+		dropdown.on('change', () => {
+			let val = dropdown.val();
+
 			if (val !== 'default') {
 				window.location.hash = val;
 			} else {
@@ -112,27 +114,18 @@ function getDataAndAppendDropdown() {
 }
 
 function processHash(data) {
-	var hash = window.location.hash.slice(1);
-	var searchTerm;
-	var found;
-	var combined;
-	var promises = [];
+	let hash = window.location.hash.slice(1);
+	let dropdown = $('#dropdown');
 
 	$('svg,.tooltip,.tooltip-label').remove();
 
-	$(dropdown).val(hash || 'default');
-	$(dropdown).trigger("chosen:updated");
+	dropdown.val(hash || 'default');
+	dropdown.trigger('chosen:updated');
 
-	if (hash && hash.indexOf('?') !== -1) {
-
-		searchTerm = hash.split('?')[1];
-
-	} else if (hash) {
-
+	if (hash) {
 		createD3Tree($.extend(true, {}, data[hash]), {
 			root: '/'
 		});
-
 	} else {
 		doDefault(data);
 	}
@@ -148,7 +141,7 @@ function doDefault(data) {
 
 	_.forEach(data, function(value, key) {
 		combined.children.push(value);
-		value.name = key;
+		value.groupName = key;
 	});
 
 	createD3ClusterDendrogram($.extend(true, {}, combined), {
