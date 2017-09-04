@@ -96,7 +96,7 @@ module.exports.init = (options) => {
 			app.get('/rebase', rebaseImage);
 
 			app.listen(DefaultPort, () => {
-				console.log('http://localhost:9001');
+				console.log(`http://localhost:${DefaultPort}`);
 			});
 		}
 	};

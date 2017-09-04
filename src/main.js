@@ -46,7 +46,7 @@ function initialiseSideBar() {
 		updateSideBar({});
 	});
 
-	rebaseBtn.click(function() {
+	rebaseBtn.click(function(event) {
 		let { original, latest, svgElement } = rebaseBtn.data();
 
 		$.get('rebase', { original, latest }, function() {
@@ -54,6 +54,8 @@ function initialiseSideBar() {
 			rebaseSuccessBtn.show();
 			svgElement.className.baseVal = svgElement.className.baseVal.replace('screenshotFail', '');
 		});
+
+		event.preventDefault();
 	});
 }
 
