@@ -47,6 +47,7 @@ module.exports.init = (options) => {
 						isChanceRoot: false,
 						isDecisionRoot: false,
 						isFailed: test.failed,
+						isRebased: !!test.rebased,
 						screenshot: getScreenshotData(moduleName, test),
 						children: !isLast ? [{}] : null
 					});
@@ -87,7 +88,24 @@ module.exports.init = (options) => {
 		fs.createReadStream(getPath(latest))
 			.pipe(fs.createWriteStream(getPath(original)));
 
+		updateRebaseStatus(moduleName, testName);
+
 		response.send('');
+	}
+
+	function updateRebaseStatus(moduleName, testName) {
+		options.testLists.map(getPath).forEach((testList) => {
+			let data = JSON.parse(fs.readFileSync(testList));
+
+			if (data.hasOwnProperty(moduleName)) {
+				data[moduleName].forEach((test) => {
+					if (test.name === testName) {
+						test.rebased = true;
+						fs.writeFileSync(testList, JSON.stringify(data));
+					}
+				});
+			}
+		});
 	}
 
 	return {

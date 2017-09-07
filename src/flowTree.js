@@ -28,6 +28,10 @@ function updateClassNames(svg) {
 		.classed('active', true);
 
 	svg.selectAll('.active')
+		.filter((d) => d.isRebased)
+		.classed('rebased', true);
+
+	svg.selectAll('.active:not(.rebased)')
 		.filter((d) => d.isFailed)
 		.classed('fail', true);
 }

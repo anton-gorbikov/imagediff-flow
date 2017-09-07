@@ -40314,7 +40314,8 @@ function updateSteps(svg) {
 	applyClass(steps, 'isDecisionRoot', 'decisionRoot');
 	applyClass(steps, 'isChance', 'chance');
 	applyClass(steps, 'isActive', 'active');
-	applyClass(svg.selectAll('.active'), 'isFailed', 'fail');
+	applyClass(svg.selectAll('.active'), 'isRebased', 'rebased');
+	applyClass(svg.selectAll('.active:not(.rebased)'), 'isFailed', 'fail');
 
 	common.handleStepsHover(steps);
 }
@@ -40657,6 +40658,10 @@ function updateClassNames(svg) {
 		.classed('active', true);
 
 	svg.selectAll('.active')
+		.filter((d) => d.isRebased)
+		.classed('rebased', true);
+
+	svg.selectAll('.active:not(.rebased)')
 		.filter((d) => d.isFailed)
 		.classed('fail', true);
 }
@@ -40804,7 +40809,7 @@ function initialiseSideBar() {
 				testName: e.name,
 				svgElement: e.element
 			});
-			if (!e.element.classList.contains('failed')) {
+			if (e.element.classList.contains('fail')) {
 				rebaseSuccessBtn.hide();
 				rebaseBtn.show();
 			} else {
@@ -40826,7 +40831,7 @@ function initialiseSideBar() {
 		$.get('rebase', { moduleName, testName }, function() {
 			rebaseBtn.hide();
 			rebaseSuccessBtn.show();
-			svgElement.classList.remove('failed');
+			svgElement.classList.remove('fail');
 		});
 
 		event.preventDefault();
@@ -40836,8 +40841,8 @@ function initialiseSideBar() {
 function updateSideBar(e) {
 	$('#vis_name').text(e.name || '');
 	toggleSideBarImages(e, 'latest');
-	toggleSideBarImages(e, 'diff');
 	toggleSideBarImages(e, 'original');
+	toggleSideBarImages(e, 'diff');
 }
 
 function toggleSideBarImages(e, prop) {

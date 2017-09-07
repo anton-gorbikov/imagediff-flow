@@ -10,7 +10,8 @@ function updateSteps(svg) {
 	applyClass(steps, 'isDecisionRoot', 'decisionRoot');
 	applyClass(steps, 'isChance', 'chance');
 	applyClass(steps, 'isActive', 'active');
-	applyClass(svg.selectAll('.active'), 'isFailed', 'fail');
+	applyClass(svg.selectAll('.active'), 'isRebased', 'rebased');
+	applyClass(svg.selectAll('.active:not(.rebased)'), 'isFailed', 'fail');
 
 	common.handleStepsHover(steps);
 }

@@ -30,7 +30,7 @@ function initialiseSideBar() {
 				testName: e.name,
 				svgElement: e.element
 			});
-			if (!e.element.classList.contains('failed')) {
+			if (e.element.classList.contains('fail')) {
 				rebaseSuccessBtn.hide();
 				rebaseBtn.show();
 			} else {
@@ -52,7 +52,7 @@ function initialiseSideBar() {
 		$.get('rebase', { moduleName, testName }, function() {
 			rebaseBtn.hide();
 			rebaseSuccessBtn.show();
-			svgElement.classList.remove('failed');
+			svgElement.classList.remove('fail');
 		});
 
 		event.preventDefault();
