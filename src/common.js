@@ -50,8 +50,8 @@ function handleStepsHover(steps) {
 				type: 'screenshot',
 				name: e.name,
 				moduleName: e.moduleName,
-				diff: e.screenshot.failure,
-				latest: e.screenshot.latest,
+				diff: e.isFailed ? e.screenshot.failure : '',
+				latest: e.isFailed ? e.screenshot.latest : '',
 				original: e.screenshot.original,
 				element: this
 			});
